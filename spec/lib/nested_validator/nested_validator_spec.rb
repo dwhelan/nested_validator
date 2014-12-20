@@ -40,25 +40,48 @@ describe NestedValidator do
     subject.child = child
   end
 
+  shared_examples 'should be valid with attributes set to nil' do |*attributes|
+    attributes.each do |attribute|
+      context "with #{attribute} set to 'nil'" do
+        before { child.send("#{attribute}=", nil);subject.valid? }
+
+        it { should be_valid }
+        its('errors.messages') { should be_empty }
+      end
+    end
+  end
+
+  shared_examples 'should be invalid with attributes set to nil' do |*attributes|
+    attributes.each do |attribute|
+      context "with #{attribute} set to 'nil'" do
+        before { child.send("#{attribute}=", nil);subject.valid? }
+
+        it { should be_invalid }
+        its('errors.messages') { should eq :"child #{attribute}" => ["can't be blank"] }
+      end
+    end
+  end
+
   describe 'with nested: true' do
 
     subject { Class.new(parent) { validates :child, nested: true }.new }
 
-    context('and all attributes valid')  { it { should  be_valid } }
-
-    context('and attribute1 is invalid') { before { child.attribute1 = nil }; it { should_not be_valid } }
-    context('and attribute2 is invalid') { before { child.attribute2 = nil }; it { should_not be_valid } }
-    context('and attribute3 is invalid') { before { child.attribute3 = nil }; it { should_not be_valid } }
+    include_examples 'should be invalid with attributes set to nil', :attribute1, :attribute2, :attribute3
   end
 
   describe 'with "nested: { only: :attribute1 }"' do
 
     subject { Class.new(parent) { validates :child, nested: { only: :attribute1 } }.new }
 
-    context('and all attributes valid')  { it { should  be_valid } }
+    include_examples 'should be invalid with attributes set to nil', :attribute1
+    include_examples 'should be valid with attributes set to nil',   :attribute2, :attribute3
+  end
 
-    context('and attribute1 is invalid') { before { child.attribute1 = nil }; it { should_not be_valid } }
-    context('and attribute2 is invalid') { before { child.attribute2 = nil }; it { should     be_valid } }
-    context('and attribute3 is invalid') { before { child.attribute3 = nil }; it { should     be_valid } }
+  describe 'with "nested: { except: :attribute1 }"' do
+
+    subject { Class.new(parent) { validates :child, nested: { except: :attribute1 } }.new }
+
+    include_examples 'should be valid with attributes set to nil',   :attribute1
+    include_examples 'should be invalid with attributes set to nil', :attribute2, :attribute3
   end
 end
