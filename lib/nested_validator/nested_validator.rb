@@ -1,4 +1,5 @@
 require 'active_model'
+require 'active_support/core_ext/array'
 
 module ActiveModel
   module Validations
