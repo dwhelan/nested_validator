@@ -4,25 +4,25 @@ require 'nested_validator'
 require 'pry'
 
 describe NestedValidator do
-  let(:base) do
+  let(:base_class) do
     Class.new {
       include ActiveModel::Validations
 
+      # To keep ActiveModel happy
       def self.model_name
         ActiveModel::Name.new(self, nil, 'temp')
       end
     }
   end
 
-  let(:parent) do
-    Class.new(base) {
+  let(:parent_class) do
+    Class.new(base_class) {
       attr_accessor :child1, :child2
     }
   end
 
   let(:child_class) do
-    Class.new(base) {
-
+    Class.new(base_class) {
       attr_accessor :attribute1
       validates     :attribute1, presence: true
 
@@ -43,18 +43,16 @@ describe NestedValidator do
   let(:child1) { child_class.new }
   let(:child2) { child_class.new }
 
-  before do
-    subject.child1 = child1
-    subject.child2 = child2
-  end
-
   def parent_with(&block)
-    Class.new(parent) { instance_exec &block }.new
+    parent = Class.new(parent_class) { instance_exec &block }.new
+    parent.child1 = child1
+    parent.child2 = child2
+    parent
   end
 
   shared_examples 'excluding' do |child_name, *attributes|
     attributes.each do |attribute|
-      context "#{child_name}.#{attribute}" do
+      context "with #{child_name}.#{attribute} set to nil" do
         before { send(child_name).send("#{attribute}=", nil);subject.valid? }
         it { should be_valid }
         its('errors.messages') { should be_empty }
@@ -64,7 +62,7 @@ describe NestedValidator do
 
   shared_examples 'including' do |child_name, *attributes|
     attributes.each do |attribute|
-      context "#{child_name}.#{attribute}" do
+      context "with #{child_name}.#{attribute} set to nil" do
         before { send(child_name).send("#{attribute}=", nil);subject.valid? }
         it { should be_invalid }
         its('errors.messages') { should eq :"#{child_name} #{attribute}" => ["can't be blank"] }
@@ -80,7 +78,7 @@ describe NestedValidator do
 
   describe 'with "nested: { only: :attribute1 }"' do
 
-    subject { Class.new(parent) { validates :child1, nested: { only: :attribute1 } }.new }
+    subject { parent_with { validates :child1, nested: { only: :attribute1 } } }
 
     it_should_validate_nested 'including', :child1, :attribute1
     it_should_validate_nested 'excluding',   :child1, :attribute2, :attribute3
@@ -115,6 +113,5 @@ describe NestedValidator do
       it_should_validate_nested 'including', :child1, :attribute1
       it_should_validate_nested 'excluding', :child1, :attribute2, :attribute3
     end
-
   end
 end
