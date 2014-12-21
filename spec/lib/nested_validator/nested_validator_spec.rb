@@ -116,11 +116,35 @@ describe NestedValidator do
 
         its('errors.messages') { should eq :'OMG[0] attribute1' => ["can't be blank"] }
       end
-
-      describe 'with single invalid value' do
-        its('errors.messages') { should eq :'child1[0] attribute1' => ["can't be blank"] }
-      end
     end
+  end
+
+  context 'with a hash of values' do
+    let(:child1) { { first: child_class.new, second: child_class.new }  }
+
+    before  { child1[:first].attribute1 = nil;subject.valid? }
+    subject { with_nested_options true }
+
+    describe 'with single invalid value' do
+      its('errors.messages') { should eq :'child1[first] attribute1' => ["can't be blank"] }
+    end
+
+    describe 'with multiple invalid values' do
+      before  { child1[:second].attribute1 = nil;subject.valid? }
+      its('errors.messages') { should include :'child1[first] attribute1' => ["can't be blank"] }
+      its('errors.messages') { should include :'child1[second] attribute1' => ["can't be blank"] }
+    end
+
+    context 'with a prefix' do
+      subject { with_nested_options prefix: 'OMG' }
+
+      its('errors.messages') { should eq :'OMG[first] attribute1' => ["can't be blank"] }
+    end
+
+    #describe 'with single invalid value' do
+    #  let(:child1) { { first: child_class.new }  }
+    #  its('errors.messages') { should eq :'child1[first] attribute1' => ["can't be blank"] }
+    #end
   end
 
   describe '"validates :child1, nested: {only: ...}"' do

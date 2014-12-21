@@ -8,12 +8,27 @@ module ActiveModel
       private
 
       def validate_each(record, attribute, values)
-        values = Array.wrap(values)
-        include_index = values.count > 1
-
-        values.each_with_index do |value, index|
-          prefix = prefix(attribute, index, include_index)
+        with_each_value(values) do |index, value|
+          prefix = prefix(attribute, index, include_index?(values))
           record_error(record, prefix, value) if value.invalid?
+        end
+      end
+
+      def include_index?(values)
+        case values
+          when Hash, Array
+            true
+          else
+            false
+        end
+      end
+
+      def with_each_value(values, &block)
+        case values
+          when Hash
+            values.each { |key, value| block.call key, value }
+          else
+            Array.wrap(values).each_with_index { |value, index| block.call index, value}
         end
       end
 
