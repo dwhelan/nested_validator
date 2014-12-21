@@ -14,15 +14,6 @@ module ActiveModel
         end
       end
 
-      def include_index?(values)
-        case values
-          when Hash, Array
-            true
-          else
-            false
-        end
-      end
-
       def with_each_value(values, &block)
         case values
           when Hash
@@ -32,16 +23,20 @@ module ActiveModel
         end
       end
 
-      def record_error(record, prefix, value)
-        value.errors.each do |key, error|
-          record.errors.add(nested_key(prefix, key), error) if include?(key)
-        end
+      def include_index?(values)
+        values.respond_to? :each
       end
 
       def prefix(attribute, index, include_index)
         prefix = (options.has_key?(:prefix) ? options[:prefix] : attribute).to_s
         prefix << "[#{index}]" if include_index
         prefix
+      end
+
+      def record_error(record, prefix, value)
+        value.errors.each do |key, error|
+          record.errors.add(nested_key(prefix, key), error) if include?(key)
+        end
       end
 
       def nested_key(prefix, key)
