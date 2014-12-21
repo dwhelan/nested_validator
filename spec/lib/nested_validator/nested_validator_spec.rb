@@ -16,11 +16,11 @@ describe NestedValidator do
 
   let(:parent) do
     Class.new(base) {
-      attr_accessor :child, :child2
+      attr_accessor :child1, :child2
     }
   end
 
-  let(:child) do
+  let(:child_class) do
     Class.new(base) {
 
       attr_accessor :attribute1
@@ -31,34 +31,20 @@ describe NestedValidator do
 
       attr_accessor :attribute3
       validates     :attribute3, presence: true
-    }.new
+
+      def initialize
+        @attribute1 = 'valid'
+        @attribute2 = 'valid'
+        @attribute3 = 'valid'
+      end
+    }
   end
 
-
-  let(:child2) do
-    Class.new(base) {
-
-      attr_accessor :attribute1
-      validates     :attribute1, presence: true
-
-      attr_accessor :attribute2
-      validates     :attribute2, presence: true
-
-      attr_accessor :attribute3
-      validates     :attribute3, presence: true
-    }.new
-  end
+  let(:child1) { child_class.new }
+  let(:child2) { child_class.new }
 
   before do
-    child.attribute1 = 'valid'
-    child.attribute2 = 'valid'
-    child.attribute3 = 'valid'
-
-    child2.attribute1 = 'valid'
-    child2.attribute2 = 'valid'
-    child2.attribute3 = 'valid'
-
-    subject.child = child
+    subject.child1 = child1
     subject.child2 = child2
   end
 
@@ -87,39 +73,48 @@ describe NestedValidator do
   end
 
   describe 'with "nested: true"' do
-    subject { parent_with { validates :child, nested: true } }
+    subject { parent_with { validates :child1, nested: true } }
 
-    it_should_validate_nested 'including', :child, :attribute1, :attribute2, :attribute3
+    it_should_validate_nested 'including', :child1, :attribute1, :attribute2, :attribute3
   end
 
   describe 'with "nested: { only: :attribute1 }"' do
 
-    subject { Class.new(parent) { validates :child, nested: { only: :attribute1 } }.new }
+    subject { Class.new(parent) { validates :child1, nested: { only: :attribute1 } }.new }
 
-    it_should_validate_nested 'including', :child, :attribute1
-    it_should_validate_nested 'excluding',   :child, :attribute2, :attribute3
+    it_should_validate_nested 'including', :child1, :attribute1
+    it_should_validate_nested 'excluding',   :child1, :attribute2, :attribute3
   end
 
   describe 'with "nested: { except: :attribute1 }"' do
-    subject { parent_with { validates :child, nested: { except: :attribute1 } } }
+    subject { parent_with { validates :child1, nested: { except: :attribute1 } } }
 
-    it_should_validate_nested 'excluding', :child, :attribute1
-    it_should_validate_nested 'including', :child, :attribute2, :attribute3
+    it_should_validate_nested 'excluding', :child1, :attribute1
+    it_should_validate_nested 'including', :child1, :attribute2, :attribute3
   end
 
   describe 'validates_nested' do
 
     describe 'with single attribute' do
-      subject { parent_with { validates_nested :child } }
+      subject { parent_with { validates_nested :child1 } }
 
-      it_should_validate_nested 'including', :child,  :attribute1, :attribute2, :attribute3
+      it_should_validate_nested 'including', :child1,  :attribute1, :attribute2, :attribute3
+      it_should_validate_nested 'excluding', :child2,  :attribute1, :attribute2, :attribute3
     end
 
     describe 'with multiple attributes' do
-      subject { parent_with { validates_nested :child, :child2 } }
+      subject { parent_with { validates_nested :child1, :child2 } }
 
-      it_should_validate_nested 'including', :child, :attribute1, :attribute2, :attribute3
+      it_should_validate_nested 'including', :child1, :attribute1, :attribute2, :attribute3
       it_should_validate_nested 'including', :child2, :attribute1, :attribute2, :attribute3
     end
+
+    describe 'with options' do
+      subject { parent_with { validates_nested :child1, only: :attribute1 } }
+
+      it_should_validate_nested 'including', :child1, :attribute1
+      it_should_validate_nested 'excluding', :child1, :attribute2, :attribute3
+    end
+
   end
 end
