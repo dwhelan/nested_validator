@@ -24,7 +24,7 @@ Or install it yourself as:
 
 ## Usage
 
-Assume we have a child class referenced from some parent class:
+Assume we have a parent object and we want its validaty to depend on its child validity:
 
 ``` ruby
 class ParentBase
@@ -46,7 +46,7 @@ class Child
 end
 ```
 
-Well, here's the easiest way to set up a nested validation:
+Well, we can use a nested validation to do just that:
 
 ``` ruby
 class Parent < ParentBase
