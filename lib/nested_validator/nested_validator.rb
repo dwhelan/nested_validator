@@ -10,7 +10,7 @@ module ActiveModel
         include_index = values.count > 1
 
         values.each_with_index do |value, index|
-          prefix = prefix(index, attribute, include_index)
+          prefix = prefix(attribute, index, include_index)
           record_error(record, value, prefix) if value.invalid?
         end
       end
@@ -23,7 +23,7 @@ module ActiveModel
 
       private
 
-      def prefix(index, attribute, include_index)
+      def prefix(attribute, index, include_index)
         prefix = (options.has_key?(:prefix) ? options[:prefix] : attribute).to_s
         prefix += "[#{index}]" if include_index
         prefix
