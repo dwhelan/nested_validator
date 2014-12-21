@@ -1,8 +1,6 @@
 require 'spec_helper'
 require 'nested_validator'
 
-require 'pry'
-
 describe NestedValidator do
   let(:base_class) do
     Class.new {
@@ -140,11 +138,6 @@ describe NestedValidator do
 
       its('errors.messages') { should eq :'OMG[first] attribute1' => ["can't be blank"] }
     end
-
-    #describe 'with single invalid value' do
-    #  let(:child1) { { first: child_class.new }  }
-    #  its('errors.messages') { should eq :'child1[first] attribute1' => ["can't be blank"] }
-    #end
   end
 
   describe '"validates :child1, nested: {only: ...}"' do
@@ -157,7 +150,7 @@ describe NestedValidator do
       it_should_validate_nested 'valid:',   :child1, :attribute2, :attribute3
     end
 
-    describe 'with "only: [:attribute1, :attribute2]"' do
+    describe 'with "only: [:atnested_validator_spec.rbtribute1, :attribute2]"' do
 
       subject { parent_with { validates :child1, nested: { only: [:attribute1, :attribute2] } } }
 
