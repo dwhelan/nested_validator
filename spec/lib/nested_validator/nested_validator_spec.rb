@@ -79,7 +79,6 @@ describe NestedValidator do
   end
 
   describe 'error messages' do
-
     before  { child1.attribute1 = nil;subject.valid? }
 
     describe 'with no prefix' do
@@ -127,6 +126,15 @@ describe NestedValidator do
 
       it_should_validate_nested 'invalid:', :child1, :attribute3
       it_should_validate_nested 'valid:',   :child1, :attribute1, :attribute2
+    end
+  end
+
+  describe 'attributes in "only" option should take precedence over "except"' do
+    describe '"validates :child1, nested: {only: attribute1, except: :attribute1}"' do
+      subject { with_nested_options only: :attribute1, except: :attribute1 }
+
+      it_should_validate_nested 'invalid:', :child1, :attribute1
+      it_should_validate_nested 'valid:',   :child1, :attribute2, :attribute3
     end
   end
 
