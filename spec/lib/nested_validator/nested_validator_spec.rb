@@ -50,68 +50,109 @@ describe NestedValidator do
     parent
   end
 
-  shared_examples 'excluding' do |child_name, *attributes|
+  def with_nested_options(options)
+    parent_with { validates :child1, nested: options }
+  end
+
+  shared_examples 'valid:' do |child_name, *attributes|
     attributes.each do |attribute|
-      context "with #{child_name}.#{attribute} set to nil" do
-        before { send(child_name).send("#{attribute}=", nil);subject.valid? }
-        it { should be_valid }
-        its('errors.messages') { should be_empty }
+      specify "when #{child_name}.#{attribute} set to nil" do
+        send(child_name).send("#{attribute}=", nil)
+        expect(subject).to be_valid
       end
     end
   end
 
-  shared_examples 'including' do |child_name, *attributes|
+  shared_examples 'invalid:' do |child_name, *attributes|
     attributes.each do |attribute|
-      context "with #{child_name}.#{attribute} set to nil" do
-        before { send(child_name).send("#{attribute}=", nil);subject.valid? }
-        it { should be_invalid }
-        its('errors.messages') { should eq :"#{child_name} #{attribute}" => ["can't be blank"] }
+      specify "when #{child_name}.#{attribute} set to nil" do
+        send(child_name).send("#{attribute}=", nil)
+        expect(subject).to be_invalid
       end
     end
   end
 
   describe 'with "nested: true"' do
-    subject { parent_with { validates :child1, nested: true } }
+    subject { with_nested_options true }
 
-    it_should_validate_nested 'including', :child1, :attribute1, :attribute2, :attribute3
+    it_should_validate_nested 'invalid:', :child1, :attribute1, :attribute2, :attribute3
   end
 
-  describe 'with "nested: { only: :attribute1 }"' do
+  describe 'error messages' do
 
-    subject { parent_with { validates :child1, nested: { only: :attribute1 } } }
+    before  { child1.attribute1 = nil;subject.valid? }
 
-    it_should_validate_nested 'including', :child1, :attribute1
-    it_should_validate_nested 'excluding',   :child1, :attribute2, :attribute3
+    describe 'with no prefix' do
+      subject { with_nested_options true }
+
+      its('errors.messages') { should eq :'child1 attribute1' => ["can't be blank"] }
+    end
+
+    describe 'with "prefix: "OMG""' do
+      subject { with_nested_options prefix: 'OMG' }
+
+      its('errors.messages') { should eq :'OMG attribute1' => ["can't be blank"] }
+    end
   end
 
-  describe 'with "nested: { except: :attribute1 }"' do
-    subject { parent_with { validates :child1, nested: { except: :attribute1 } } }
+  describe '"validates :child1, nested: {only: ...}"' do
 
-    it_should_validate_nested 'excluding', :child1, :attribute1
-    it_should_validate_nested 'including', :child1, :attribute2, :attribute3
+    describe 'with "only: :attribute1"' do
+
+      subject { with_nested_options only: :attribute1 }
+
+      it_should_validate_nested 'invalid:', :child1, :attribute1
+      it_should_validate_nested 'valid:',   :child1, :attribute2, :attribute3
+    end
+
+    describe 'with "only: [:attribute1, :attribute2]"' do
+
+      subject { parent_with { validates :child1, nested: { only: [:attribute1, :attribute2] } } }
+
+      it_should_validate_nested 'invalid:', :child1, :attribute1, :attribute2
+      it_should_validate_nested 'valid:',   :child1, :attribute3
+    end
+  end
+
+  describe '"validates :child1, nested: {except: ...}"' do
+    describe 'with "except: :attribute1"' do
+      subject { with_nested_options except: :attribute1 }
+
+      it_should_validate_nested 'invalid:', :child1, :attribute2, :attribute3
+      it_should_validate_nested 'valid:',   :child1, :attribute1
+    end
+
+    describe 'with "except: [:attribute1, :attribute2"' do
+      subject { with_nested_options except: [:attribute1, :attribute2] }
+
+      it_should_validate_nested 'invalid:', :child1, :attribute3
+      it_should_validate_nested 'valid:',   :child1, :attribute1, :attribute2
+    end
   end
 
   describe 'validates_nested' do
 
-    describe 'with single attribute' do
+    describe 'validates_nested :child1' do
       subject { parent_with { validates_nested :child1 } }
 
-      it_should_validate_nested 'including', :child1,  :attribute1, :attribute2, :attribute3
-      it_should_validate_nested 'excluding', :child2,  :attribute1, :attribute2, :attribute3
+      it_should_validate_nested 'invalid:', :child1,  :attribute1, :attribute2, :attribute3
+      it_should_validate_nested 'valid:',   :child2,  :attribute1, :attribute2, :attribute3
     end
 
-    describe 'with multiple attributes' do
+    describe 'validates_nested :child1, :child2' do
       subject { parent_with { validates_nested :child1, :child2 } }
 
-      it_should_validate_nested 'including', :child1, :attribute1, :attribute2, :attribute3
-      it_should_validate_nested 'including', :child2, :attribute1, :attribute2, :attribute3
+      it_should_validate_nested 'invalid:', :child1, :attribute1, :attribute2, :attribute3
+      it_should_validate_nested 'invalid:', :child2, :attribute1, :attribute2, :attribute3
     end
 
-    describe 'with options' do
-      subject { parent_with { validates_nested :child1, only: :attribute1 } }
+    describe 'validates_nested :child1, :child2, only: :attribute1' do
+      subject { parent_with { validates_nested :child1, :child2, only: :attribute1 } }
 
-      it_should_validate_nested 'including', :child1, :attribute1
-      it_should_validate_nested 'excluding', :child1, :attribute2, :attribute3
+      it_should_validate_nested 'invalid:', :child1, :attribute1
+      it_should_validate_nested 'invalid:', :child2, :attribute1
+      it_should_validate_nested 'valid:',   :child1, :attribute2, :attribute3
+      it_should_validate_nested 'valid:',   :child2, :attribute2, :attribute3
     end
   end
 end
