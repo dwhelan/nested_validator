@@ -82,4 +82,21 @@ describe 'Typical usage' do
     parent.valid?
     puts parent.errors.messages
   end
+
+  specify 'multiple children' do
+    class ParentMultiple < ParentBase
+      attr_accessor :child2
+
+      validates_nested :child, :child2, only: :attribute1
+
+      def initialize
+        self.child  = Child.new
+        self.child2 = Child.new
+      end
+    end
+
+    parent = ParentMultiple.new
+    parent.valid?
+    puts parent.errors.messages
+  end
 end

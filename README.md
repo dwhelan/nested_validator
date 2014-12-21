@@ -56,6 +56,7 @@ end
 parent = Parent.new
 parent.valid?
 puts parent.errors.messages
+
 #=> {:"child attribute1"=>["can't be blank"], :"child attribute2"=>["can't be blank"]}
 ```
 ### What if I want to validate with just some of the child attributes?
@@ -70,6 +71,7 @@ end
 parent = ParentOnly.new
 parent.valid?
 puts parent.errors.messages
+
 #=> {:"child attribute1"=>["can't be blank"]}
 ```
 
@@ -87,10 +89,11 @@ end
 parent = ParentExcept.new
 parent.valid?
 puts parent.errors.messages
+
 #=> {:"child attribute1"=>["can't be blank"]}
 ```
 
-### Alright, what if I want a custom message other than the child's name
+### Alright, what if I want a custom message?
 
 You can specify a prefix instead of the child's attribute name:
 
@@ -102,15 +105,16 @@ end
 parent = ParentPrefix.new
 parent.valid?
 puts parent.errors.messages
+
 #=> {:"OMG attribute1"=>["can't be blank"]}
 ```
 
 ### What happens if the child is an Array or Hash?
 
 In this case, each value in the array or hash will be validated and the error message will
-include the index of key of the value.
+include the index or key of the value.
 
-For an array of values:
+For an array:
 
 ``` ruby
 class ParentArray < ParentBase
@@ -121,10 +125,11 @@ parent = ParentArray.new
 parent.child = [Child.new] * 2
 parent.valid?
 puts parent.errors.messages
+
 #=> {:"child[0] attribute1"=>["can't be blank"], :"child[1] attribute1"=>["can't be blank"]}
 ```
 
-For a hash of values:
+For a hash:
 
 ``` ruby
 class ParentHash < ParentBase
@@ -135,8 +140,31 @@ parent = ParentHash.new
 parent.child = { thing1: Child.new, thing2: Child.new }
 parent.valid?
 puts parent.errors.messages
+
 #=> {:"child[thing1] attribute1"=>["can't be blank"], :"child[thing2] attribute1"=>["can't be blank"]}
 ```
+
+### Can I easily use this for multiple child attributes?
+
+You can use the ```validates_nested``` method:
+
+``` ruby
+class ParentMultiple < ParentBase
+  attr_accessor :child2
+
+  validates_nested :child, :child2, only: :attribute1
+
+  def initialize
+    self.child  = Child.new
+    self.child2 = Child.new
+  end
+end
+
+parent = ParentMultiple.new
+parent.valid?
+puts parent.errors.messages
+
+#=> {:"child attribute1"=>["can't be blank"], :"child2 attribute1"=>["can't be blank"]}```
 
 ## Contributing
 
