@@ -79,18 +79,47 @@ describe NestedValidator do
   end
 
   describe 'error messages' do
-    before  { child1.attribute1 = nil;subject.valid? }
+    context 'with scalar values' do
+      before  { child1.attribute1 = nil;subject.valid? }
 
-    describe 'with no prefix' do
-      subject { with_nested_options true }
+      describe 'with no prefix' do
+        subject { with_nested_options true }
 
-      its('errors.messages') { should eq :'child1 attribute1' => ["can't be blank"] }
+        its('errors.messages') { should eq :'child1 attribute1' => ["can't be blank"] }
+      end
+
+      describe 'with "prefix: "OMG""' do
+        subject { with_nested_options prefix: 'OMG' }
+
+        its('errors.messages') { should eq :'OMG attribute1' => ["can't be blank"] }
+      end
     end
 
-    describe 'with "prefix: "OMG""' do
-      subject { with_nested_options prefix: 'OMG' }
+    context 'with an array of values' do
+      let(:child1) { [child_class.new, child_class.new]  }
 
-      its('errors.messages') { should eq :'OMG attribute1' => ["can't be blank"] }
+      before  { child1[0].attribute1 = nil;subject.valid? }
+      subject { with_nested_options true }
+
+      describe 'with single invalid value' do
+        its('errors.messages') { should eq :'child1[0] attribute1' => ["can't be blank"] }
+      end
+
+      describe 'with multiple invalid values' do
+        before  { child1[1].attribute1 = nil;subject.valid? }
+        its('errors.messages') { should include :'child1[0] attribute1' => ["can't be blank"] }
+        its('errors.messages') { should include :'child1[1] attribute1' => ["can't be blank"] }
+      end
+
+      context 'with a prefix' do
+        subject { with_nested_options prefix: 'OMG' }
+
+        its('errors.messages') { should eq :'OMG[0] attribute1' => ["can't be blank"] }
+      end
+
+      describe 'with single invalid value' do
+        its('errors.messages') { should eq :'child1[0] attribute1' => ["can't be blank"] }
+      end
     end
   end
 

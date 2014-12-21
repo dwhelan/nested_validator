@@ -5,27 +5,27 @@ module ActiveModel
   module Validations
     class NestedValidator < EachValidator
 
+      private
+
       def validate_each(record, attribute, values)
         values = Array.wrap(values)
         include_index = values.count > 1
 
         values.each_with_index do |value, index|
           prefix = prefix(attribute, index, include_index)
-          record_error(record, value, prefix) if value.invalid?
+          record_error(record, prefix, value) if value.invalid?
         end
       end
 
-      def record_error(record, value, prefix)
+      def record_error(record, prefix, value)
         value.errors.each do |key, error|
           record.errors.add(nested_key(prefix, key), error) if include?(key)
         end
       end
 
-      private
-
       def prefix(attribute, index, include_index)
         prefix = (options.has_key?(:prefix) ? options[:prefix] : attribute).to_s
-        prefix += "[#{index}]" if include_index
+        prefix << "[#{index}]" if include_index
         prefix
       end
 
@@ -44,17 +44,17 @@ module ActiveModel
       end
 
       def only
-        Array.wrap(options[:only])
+        @only ||= Array.wrap(options[:only])
       end
 
       def except
-        Array.wrap(options[:except])
+        @except ||= Array.wrap(options[:except])
       end
     end
 
     module HelperMethods
-      def validates_nested(*attr_names)
-        validates_with NestedValidator, _merge_attributes(attr_names)
+      def validates_nested(*attributes)
+        validates_with NestedValidator, _merge_attributes(attributes)
       end
     end
   end
