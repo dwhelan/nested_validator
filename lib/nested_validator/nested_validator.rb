@@ -10,14 +10,14 @@ module ActiveModel
         include_index = values.count > 1
 
         values.each_with_index do |value, index|
-          record_error(record, value, attribute, include_index, index) if value.invalid?
+          prefix = prefix(index, attribute, include_index)
+          record_error(record, value, prefix) if value.invalid?
         end
       end
 
-      def record_error(record, value, attribute, include_index, index)
+      def record_error(record, value, prefix)
         value.errors.each do |key, error|
-          nested_key = nested_key(key, index, attribute, include_index)
-          record.errors.add(nested_key, error) if include?(key)
+          record.errors.add(nested_key(prefix, key), error) if include?(key)
         end
       end
 
@@ -29,8 +29,8 @@ module ActiveModel
         prefix
       end
 
-      def nested_key(key, index, attribute, include_index)
-        "#{prefix(index, attribute, include_index)} #{key}".strip.to_sym
+      def nested_key(prefix, key)
+        "#{prefix} #{key}".strip.to_sym
       end
 
       def include?(key)
