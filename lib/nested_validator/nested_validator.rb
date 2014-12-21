@@ -5,38 +5,32 @@ module ActiveModel
   module Validations
     class NestedValidator < EachValidator
 
-      def validate_each(record, attribute, inputs)
-        @attribute = attribute
-        @values = Array.wrap(inputs)
-        validate_each_input(record)
+      def validate_each(record, attribute, values)
+        values = Array.wrap(values)
+        include_index = values.count > 1
+
+        values.each_with_index do |value, index|
+          record_error(record, value, attribute, include_index, index) if value.invalid?
+        end
+      end
+
+      def record_error(record, value, attribute, include_index, index)
+        value.errors.each do |key, error|
+          nested_key = nested_key(key, index, attribute, include_index)
+          record.errors.add(nested_key, error) if include?(key)
+        end
       end
 
       private
 
-      attr_reader :attribute, :values
-
-      def validate_each_input(record)
-        values.each_with_index do |value, index|
-          unless value.valid?
-            value.errors.each do |key, error|
-              record.errors.add(nested_key(key, index), error) if include?(key)
-            end
-          end
-        end
-      end
-
-      def include_index?
-        values.count > 1
-      end
-
-      def nested_key(key, index)
-        "#{prefix(index)} #{key}".strip.to_sym
-      end
-
-      def prefix(index)
+      def prefix(index, attribute, include_index)
         prefix = (options.has_key?(:prefix) ? options[:prefix] : attribute).to_s
-        prefix += "[#{index}]" if include_index?
+        prefix += "[#{index}]" if include_index
         prefix
+      end
+
+      def nested_key(key, index, attribute, include_index)
+        "#{prefix(index, attribute, include_index)} #{key}".strip.to_sym
       end
 
       def include?(key)
