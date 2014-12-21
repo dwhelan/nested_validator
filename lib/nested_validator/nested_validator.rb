@@ -59,7 +59,7 @@ module ActiveModel
     end
 
     module HelperMethods
-      def self.validates_nested(*attr_names)
+      def validates_nested(*attr_names)
         validates_with NestedValidator, _merge_attributes(attr_names)
       end
     end

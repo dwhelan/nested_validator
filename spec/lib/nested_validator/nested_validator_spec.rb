@@ -1,6 +1,8 @@
 require 'spec_helper'
 require 'nested_validator'
 
+require 'pry'
+
 describe NestedValidator do
   let(:base) do
     Class.new {
@@ -14,11 +16,26 @@ describe NestedValidator do
 
   let(:parent) do
     Class.new(base) {
-      attr_accessor :child
+      attr_accessor :child, :child2
     }
   end
 
   let(:child) do
+    Class.new(base) {
+
+      attr_accessor :attribute1
+      validates     :attribute1, presence: true
+
+      attr_accessor :attribute2
+      validates     :attribute2, presence: true
+
+      attr_accessor :attribute3
+      validates     :attribute3, presence: true
+    }.new
+  end
+
+
+  let(:child2) do
     Class.new(base) {
 
       attr_accessor :attribute1
@@ -37,51 +54,72 @@ describe NestedValidator do
     child.attribute2 = 'valid'
     child.attribute3 = 'valid'
 
+    child2.attribute1 = 'valid'
+    child2.attribute2 = 'valid'
+    child2.attribute3 = 'valid'
+
     subject.child = child
+    subject.child2 = child2
   end
 
-  shared_examples 'should be valid with attributes set to nil' do |*attributes|
-    attributes.each do |attribute|
-      context "with #{attribute} set to 'nil'" do
-        before { child.send("#{attribute}=", nil);subject.valid? }
+  def parent_with(&block)
+    Class.new(parent) { instance_exec &block }.new
+  end
 
+  shared_examples 'excluding' do |child_name, *attributes|
+    attributes.each do |attribute|
+      context "#{child_name}.#{attribute}" do
+        before { send(child_name).send("#{attribute}=", nil);subject.valid? }
         it { should be_valid }
         its('errors.messages') { should be_empty }
       end
     end
   end
 
-  shared_examples 'should be invalid with attributes set to nil' do |*attributes|
+  shared_examples 'including' do |child_name, *attributes|
     attributes.each do |attribute|
-      context "with #{attribute} set to 'nil'" do
-        before { child.send("#{attribute}=", nil);subject.valid? }
-
+      context "#{child_name}.#{attribute}" do
+        before { send(child_name).send("#{attribute}=", nil);subject.valid? }
         it { should be_invalid }
-        its('errors.messages') { should eq :"child #{attribute}" => ["can't be blank"] }
+        its('errors.messages') { should eq :"#{child_name} #{attribute}" => ["can't be blank"] }
       end
     end
   end
 
-  describe 'with nested: true' do
+  describe 'with "nested: true"' do
+    subject { parent_with { validates :child, nested: true } }
 
-    subject { Class.new(parent) { validates :child, nested: true }.new }
-
-    include_examples 'should be invalid with attributes set to nil', :attribute1, :attribute2, :attribute3
+    it_should_validate_nested 'including', :child, :attribute1, :attribute2, :attribute3
   end
 
   describe 'with "nested: { only: :attribute1 }"' do
 
     subject { Class.new(parent) { validates :child, nested: { only: :attribute1 } }.new }
 
-    include_examples 'should be invalid with attributes set to nil', :attribute1
-    include_examples 'should be valid with attributes set to nil',   :attribute2, :attribute3
+    it_should_validate_nested 'including', :child, :attribute1
+    it_should_validate_nested 'excluding',   :child, :attribute2, :attribute3
   end
 
   describe 'with "nested: { except: :attribute1 }"' do
+    subject { parent_with { validates :child, nested: { except: :attribute1 } } }
 
-    subject { Class.new(parent) { validates :child, nested: { except: :attribute1 } }.new }
+    it_should_validate_nested 'excluding', :child, :attribute1
+    it_should_validate_nested 'including', :child, :attribute2, :attribute3
+  end
 
-    include_examples 'should be valid with attributes set to nil',   :attribute1
-    include_examples 'should be invalid with attributes set to nil', :attribute2, :attribute3
+  describe 'validates_nested' do
+
+    describe 'with single attribute' do
+      subject { parent_with { validates_nested :child } }
+
+      it_should_validate_nested 'including', :child,  :attribute1, :attribute2, :attribute3
+    end
+
+    describe 'with multiple attributes' do
+      subject { parent_with { validates_nested :child, :child2 } }
+
+      it_should_validate_nested 'including', :child, :attribute1, :attribute2, :attribute3
+      it_should_validate_nested 'including', :child2, :attribute1, :attribute2, :attribute3
+    end
   end
 end
