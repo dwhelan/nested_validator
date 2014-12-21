@@ -27,14 +27,6 @@ Or install it yourself as:
 Assume we have a child class referenced from some parent class:
 
 ``` ruby
-class Child
-  include ActiveModel::Validations
-
-  attr_accessor :attribute1, :attribute2
-  validates :attribute1, presence: true
-  validates :attribute2, presence: true
-end
-
 class ParentBase
   include ActiveModel::Validations
 
@@ -45,8 +37,14 @@ class ParentBase
   end
 end
 
+class Child
+  include ActiveModel::Validations
+
+  attr_accessor :attribute1, :attribute2
+  validates :attribute1, presence: true
+  validates :attribute2, presence: true
+end
 ```
-### So how do I use this thing?
 
 Well, here's the easiest way to set up a nested validation:
 
@@ -57,7 +55,8 @@ end
 
 parent = Parent.new
 parent.valid?
-puts parent.errors.messages #=> {:"child attribute1"=>["can't be blank"], :"child attribute2"=>["can't be blank"]}
+puts parent.errors.messages
+#=> {:"child attribute1"=>["can't be blank"], :"child attribute2"=>["can't be blank"]}
 ```
 ### What if I want to validate with just some of the child attributes?
 
@@ -70,7 +69,8 @@ end
 
 parent = ParentOnly.new
 parent.valid?
-puts parent.errors.messages #=> {:"child attribute1"=>["can't be blank"]}
+puts parent.errors.messages
+#=> {:"child attribute1"=>["can't be blank"]}
 ```
 
 You can also provide an array of attributes to ```only``` if you want to include more than one.
@@ -86,7 +86,8 @@ end
 
 parent = ParentExcept.new
 parent.valid?
-puts parent.errors.messages #=> {:"child attribute1"=>["can't be blank"]}
+puts parent.errors.messages
+#=> {:"child attribute1"=>["can't be blank"]}
 ```
 
 ### Alright, what if I want a custom message other than the child's name
@@ -100,7 +101,8 @@ end
 
 parent = ParentPrefix.new
 parent.valid?
-puts parent.errors.messages #=> {:"OMG attribute1"=>["can't be blank"]}
+puts parent.errors.messages
+#=> {:"OMG attribute1"=>["can't be blank"]}
 ```
 
 ### What happens if the child is an Array or Hash?
@@ -118,7 +120,8 @@ end
 parent = ParentArray.new
 parent.child = [Child.new] * 2
 parent.valid?
-puts parent.errors.messages #=> {:"child[0] attribute1"=>["can't be blank"], :"child[1] attribute1"=>["can't be blank"]}
+puts parent.errors.messages
+#=> {:"child[0] attribute1"=>["can't be blank"], :"child[1] attribute1"=>["can't be blank"]}
 ```
 
 For a hash of values:
@@ -131,7 +134,8 @@ end
 parent = ParentHash.new
 parent.child = { thing1: Child.new, thing2: Child.new }
 parent.valid?
-puts parent.errors.messages #=> {:"child[thing1] attribute1"=>["can't be blank"], :"child[thing2] attribute1"=>["can't be blank"]}
+puts parent.errors.messages
+#=> {:"child[thing1] attribute1"=>["can't be blank"], :"child[thing2] attribute1"=>["can't be blank"]}
 ```
 
 ## Contributing
