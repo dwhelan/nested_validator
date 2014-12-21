@@ -57,7 +57,7 @@ parent = Parent.new
 parent.valid?
 puts parent.errors.messages
 
- #=> {:"child attribute1"=>["can't be blank"], :"child attribute2"=>["can't be blank"]}
+    #=> {:"child attribute1"=>["can't be blank"], :"child attribute2"=>["can't be blank"]}
 ```
 ### What if I want to validate with just some of the child attributes?
 
@@ -97,7 +97,7 @@ puts parent.errors.messages
 
 You can specify a ```prefix``` instead of the child's attribute name:
 
-```
+``` ruby
 class ParentPrefix < ParentBase
   validates :child, nested: { only: :attribute1, prefix: 'OMG'}
 end
