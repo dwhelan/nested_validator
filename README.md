@@ -56,9 +56,9 @@ end
 parent = Parent.new
 parent.valid?
 puts parent.errors.messages
-
-    #=> {:"child attribute1"=>["can't be blank"], :"child attribute2"=>["can't be blank"]}
 ```
+
+    {:"child attribute1"=>["can't be blank"], :"child attribute2"=>["can't be blank"]}
 ### What if I want to validate with just some of the child attributes?
 
 You can use an ```only``` option like this:
@@ -71,9 +71,9 @@ end
 parent = ParentOnly.new
 parent.valid?
 puts parent.errors.messages
-
- #=> {:"child attribute1"=>["can't be blank"]}
 ```
+
+  {:"child attribute1"=>["can't be blank"]}
 
 You can also provide an array of attributes to ```only``` if you want to include more than one.
 
