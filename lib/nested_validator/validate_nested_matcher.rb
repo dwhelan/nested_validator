@@ -1,6 +1,8 @@
 
 # RSpec matcher to spec nested validations.
 #
+# You can use symbols or strings for any values.
+#
 # Usage:
 #
 #     describe Parent do
@@ -52,8 +54,10 @@ RSpec::Matchers.define :validate_nested do |child_name|
     child_keys.inject({}){|result, key| result[key] = ['error message'];result }
   end
 
+  TEST_KEY ||= :__unique_key__
+
   def child_keys
-    keyify :__unique_key__, only_keys
+    keyify TEST_KEY, only_keys
   end
 
   def keyify(*keys)
@@ -65,7 +69,7 @@ RSpec::Matchers.define :validate_nested do |child_name|
   end
 
   def actual_prefix
-    actual_keys.to_s.sub /\s+key$/, ''
+    actual_keys.first.to_s.sub /\s+#{TEST_KEY}$/, ''
   end
 
   description do
@@ -88,6 +92,6 @@ RSpec::Matchers.define :validate_nested do |child_name|
     "expected #{parent} not to validate nested attribute :#{child_name}"
   end
 
-  chain(:with_prefix) { |prefix| self.prefix = prefix }
-  chain(:only)        { |*only|   self.only_keys   = only }
+  chain(:with_prefix) { |prefix| self.prefix    = prefix.to_s }
+  chain(:only)        { |*only|  self.only_keys = only }
 end

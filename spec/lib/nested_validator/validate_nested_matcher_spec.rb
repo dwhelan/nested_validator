@@ -56,24 +56,43 @@ describe 'validates_nested' do
     subject { with_nested_options true }
 
     it { should validate_nested(:child1) }
+    it { should validate_nested('child1') }
+
     it { should_not validate_nested(:child2) }
+    it { should_not validate_nested('child2') }
   end
 
-  describe 'with prefix' do
-    subject { with_nested_options prefix: 'Omg' }
+  describe 'with prefix "OMG"' do
+    subject { with_nested_options prefix: 'OMG' }
 
-    it { should validate_nested(:child1).with_prefix('Omg') }
-    it { should_not validate_nested(:child1) }
+    it { should validate_nested(:child1).with_prefix('OMG') }
+    it { should validate_nested(:child1).with_prefix(:OMG) }
+
+    it { should_not validate_nested(:child1).with_prefix('WTF') }
+    it { should_not validate_nested(:child1).with_prefix(:WTF) }
   end
 
-  describe 'with only key' do
+  describe 'with prefix :OMG' do
+    subject { with_nested_options prefix: :OMG }
+
+    it { should validate_nested(:child1).with_prefix('OMG') }
+    it { should validate_nested(:child1).with_prefix(:OMG) }
+
+    it { should_not validate_nested(:child1).with_prefix('WTF') }
+    it { should_not validate_nested(:child1).with_prefix(:WTF) }
+  end
+
+  describe 'with "only: :attribute1"' do
     subject { with_nested_options only: :attribute1 }
 
     it { should validate_nested(:child1).only(:attribute1) }
+    it { should validate_nested(:child1).only('attribute1') }
+
     it { should_not validate_nested(:child1).only(:attribute2) }
+    it { should_not validate_nested(:child1).only('attribute2') }
   end
 
-  describe 'with only array' do
+  describe 'with "only: [:attribute1, :attribute2]"' do
     subject { with_nested_options only: [:attribute1, :attribute2] }
 
     it { should validate_nested(:child1).only(:attribute1, :attribute2) }
