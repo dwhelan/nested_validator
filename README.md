@@ -41,6 +41,7 @@ class Child
   include ActiveModel::Validations
 
   attr_accessor :attribute1, :attribute2
+  
   validates :attribute1, presence: true
   validates :attribute2, presence: true
 end
@@ -57,7 +58,7 @@ parent = Parent.new
 parent.valid?
 puts parent.errors.messages
 
- #=> {:"child attribute1"=>["can't be blank"], :"child attribute2"=>["can't be blank"]}
+ # => {:"child attribute1"=>["can't be blank"], :"child attribute2"=>["can't be blank"]}
 ```
 ### What if I want to validate with just some of the child attributes?
 
@@ -72,7 +73,7 @@ parent = ParentOnly.new
 parent.valid?
 puts parent.errors.messages
 
- #=> {:"child attribute1"=>["can't be blank"]}
+ # => {:"child attribute1"=>["can't be blank"]}
 ```
 
 You can also provide an array of attributes to ```only``` if you want to include more than one.
@@ -90,7 +91,7 @@ parent = ParentExcept.new
 parent.valid?
 puts parent.errors.messages
 
- #=> {:"child attribute1"=>["can't be blank"]}
+ # => {:"child attribute1"=>["can't be blank"]}
 ```
 
 ### Alright, what if I want a custom message?
@@ -106,7 +107,7 @@ parent = ParentPrefix.new
 parent.valid?
 puts parent.errors.messages
 
- #=> {:"OMG attribute1"=>["can't be blank"]}
+ # => {:"OMG attribute1"=>["can't be blank"]}
 ```
 
 ### What happens if the child is an Array or Hash?
@@ -126,7 +127,7 @@ parent.child = [Child.new] * 2
 parent.valid?
 puts parent.errors.messages
 
- #=> {:"child[0] attribute1"=>["can't be blank"], :"child[1] attribute1"=>["can't be blank"]}
+ # => {:"child[0] attribute1"=>["can't be blank"], :"child[1] attribute1"=>["can't be blank"]}
 ```
 
 For a hash:
@@ -141,7 +142,7 @@ parent.child = { thing1: Child.new, thing2: Child.new }
 parent.valid?
 puts parent.errors.messages
 
- #=> {:"child[thing1] attribute1"=>["can't be blank"], :"child[thing2] attribute1"=>["can't be blank"]}
+ # => {:"child[thing1] attribute1"=>["can't be blank"], :"child[thing2] attribute1"=>["can't be blank"]}
 ```
 
 ### Can I easily use this for multiple child attributes?
@@ -164,7 +165,7 @@ parent = ParentMultiple.new
 parent.valid?
 puts parent.errors.messages
 
- #=> {:"child attribute1"=>["can't be blank"], :"child2 attribute1"=>["can't be blank"]}
+ # => {:"child attribute1"=>["can't be blank"], :"child2 attribute1"=>["can't be blank"]}
 ```
 
 ## Contributing

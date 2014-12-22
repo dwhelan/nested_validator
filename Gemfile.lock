@@ -16,6 +16,7 @@ GEM
       minitest (~> 5.1)
       thread_safe (~> 0.1)
       tzinfo (~> 1.1)
+    awesome_print (1.2.0)
     builder (3.2.2)
     coderay (1.1.0)
     coveralls (0.7.2)
@@ -72,6 +73,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  awesome_print
   bundler (~> 1.6)
   coveralls
   nested_validator!
