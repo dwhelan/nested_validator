@@ -1,4 +1,3 @@
-
 # RSpec matcher to spec nested validations.
 #
 # You can use symbols or strings for any values.
@@ -100,11 +99,21 @@ RSpec::Matchers.define :validate_nested do |child_name|
     invalid_attribute_keys.join(', ')
   end
 
+
+  def join(keys)
+    keys.map { |key| show(key) }.join(', ')
+  end
+
+  def show(key)
+    key.is_a?(Symbol) ? ":#{key}" : key.to_s
+  end
+
+
   description do
     message = "validate nested :#{child_name}"
-    message << " with only #{only_keys.join(', ')}" if only_keys.present?
-    message << " except #{except_keys.join(', ')}"  if except_keys.present?
-    message << " with prefix #{prefix}"             if prefix.present?
+    message << " with only #{join(only_keys)}" if only_keys.present?
+    message << " except #{join(except_keys)}"  if except_keys.present?
+    message << " with prefix #{show(prefix)}"  if prefix.present?
     message
   end
 
@@ -121,8 +130,6 @@ RSpec::Matchers.define :validate_nested do |child_name|
     elsif actual_prefix != expected_prefix
       message << "parent doesn't nest validations for #{child_name}"
     end
-
-
 
     if actual_keys.present?
       message << "#{child_name} was validated"
@@ -147,7 +154,7 @@ RSpec::Matchers.define :validate_nested do |child_name|
     messages.join(' and ')
   end
 
-  chain(:with_prefix) { |prefix|  self.prefix      = prefix.to_s }
+  chain(:with_prefix) { |prefix|  self.prefix      = prefix }
   chain(:only)        { |*only|   self.only_keys   = only.map(&:to_sym) }
   chain(:except)      { |*except| self.except_keys = except.map(&:to_sym) }
 end
