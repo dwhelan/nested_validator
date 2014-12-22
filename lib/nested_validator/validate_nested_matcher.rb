@@ -7,18 +7,17 @@
 #       it { should validate_nested(:child) }
 #       it { should validate_nested(:child).with_prefix(:thing1) }
 #       it { should validate_nested(:child).only(:attribute1) }
+#       it { should validate_nested(:child).only(:attribute1, :attribute2) }
 #     end
 
 RSpec::Matchers.define :validate_nested do |child_name|
 
-  attr_accessor :parent, :child_name, :child, :prefix, :actual_keys, :only_ones
-
-  CHILD_KEY ||= :key
+  attr_accessor :parent, :child_name, :child, :prefix, :actual_keys, :only_keys
 
   match do |parent|
-    self.child_name = child_name
-    self.child      = parent.send child_name
-    self.parent     = parent
+    self.child_name  = child_name
+    self.child       = parent.send child_name
+    self.parent      = parent
     self.actual_keys = (invalid_error_keys - valid_error_keys)
 
     #binding.pry
@@ -41,12 +40,12 @@ RSpec::Matchers.define :validate_nested do |child_name|
     parent.errors.keys
   end
 
-  #def expected_errors
-  #  expected_keys.inject({}){|result, key| result[key] = ['error message'];result }
-  #end
-  #
   def expected_keys
-    child_keys.map{|key| :"#{expected_prefix} #{key}"}
+    expected_child_keys.map{|key| :"#{expected_prefix} #{key}"}
+  end
+
+  def expected_child_keys
+    keyify only_keys ? only_keys : child_keys
   end
 
   def child_errors
@@ -54,11 +53,11 @@ RSpec::Matchers.define :validate_nested do |child_name|
   end
 
   def child_keys
-    [unique_key, only_ones].flatten.compact
+    keyify :__unique_key__, only_keys
   end
 
-  def unique_key
-    CHILD_KEY
+  def keyify(*keys)
+    keys.flatten.compact
   end
 
   def expected_prefix
@@ -70,7 +69,10 @@ RSpec::Matchers.define :validate_nested do |child_name|
   end
 
   description do
-    %Q{validate nested :#{child_name} #{prefix ? "with prefix #{prefix}" : ''}}
+    message = "validate nested :#{child_name}"
+    message << " with only #{only_keys.join(', ')}" if only_keys
+    message << " with prefix #{prefix}" if prefix
+    message
   end
 
   failure_message do |parent|
@@ -87,5 +89,5 @@ RSpec::Matchers.define :validate_nested do |child_name|
   end
 
   chain(:with_prefix) { |prefix| self.prefix = prefix }
-  chain(:only)        { |only|   self.only_ones   = Array.wrap(only) }
+  chain(:only)        { |*only|   self.only_keys   = only }
 end
