@@ -1,8 +1,7 @@
 require 'spec_helper'
 require 'nested_validator'
 
-
-describe 'validates_nested', :focus do
+describe 'validates_nested' do
   let(:base_class) do
     Class.new {
       include ActiveModel::Validations
@@ -58,5 +57,12 @@ describe 'validates_nested', :focus do
 
     it { should validate_nested(:child1) }
     it { should_not validate_nested(:child2) }
+  end
+
+  describe 'with prefix' do
+    subject { with_nested_options prefix: 'Omg' }
+
+    it { should validate_nested(:child1).with_prefix('Omg') }
+    it { should_not validate_nested(:child1) }
   end
 end
