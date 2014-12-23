@@ -101,7 +101,7 @@ RSpec::Matchers.define :validate_nested do |child_name|
         if prefix.present?
           "parent uses a prefix of #{show actual_prefix} rather than #{show expected_prefix}"
         else
-          "parent has a prefix of #{show actual_prefix}.\nAre you missing '.with_prefix(#{show actual_prefix})'?"
+          "parent has a prefix of #{show actual_prefix}. Are you missing '.with_prefix(#{show actual_prefix})'?"
         end
       else
         "parent does nest validations for: #{show except_keys & actual_child_keys}"

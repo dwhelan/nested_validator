@@ -124,7 +124,7 @@ describe 'validates_nested with [parent class with "validates, child1]"' do
       end
 
       context 'nested: {prefix: :OMG}' do
-        describe('validate_nested(:child1)')                   { it { should eq "parent has a prefix of :OMG.\nAre you missing '.with_prefix(:OMG)'?" } }
+        describe('validate_nested(:child1)')                   { it { should eq "parent has a prefix of :OMG. Are you missing '.with_prefix(:OMG)'?" } }
         describe('validate_nested(:child1).with_prefix(:WTF)') { it { should eq 'parent uses a prefix of :OMG rather than :WTF' } }
       end
 
