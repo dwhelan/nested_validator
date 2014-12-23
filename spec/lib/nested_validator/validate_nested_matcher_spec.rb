@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'nested_validator'
 
-describe 'validates_nested with [parent class with "validates, child1]"', :focus do
+describe 'validates_nested with [parent class with "validates, child1]"' do
   let(:parent_class) do
     Class.new {
       include ActiveModel::Validations
@@ -43,7 +43,7 @@ describe 'validates_nested with [parent class with "validates, child1]"', :focus
 
   before { parent_class.class_eval "validates :child1, #{options}" }
 
-  describe 'its validations with options' do
+  describe 'its validations with options:' do
     let(:options) { self.class.description }
 
     subject { parent }
@@ -57,9 +57,11 @@ describe 'validates_nested with [parent class with "validates, child1]"', :focus
     end
 
     context 'nested: {prefix: "OMG"}' do
+
       it { should validate_nested(:child1).with_prefix('OMG') }
       it { should validate_nested(:child1).with_prefix(:OMG) }
 
+      it { should_not validate_nested(:child1) }
       it { should_not validate_nested(:child1).with_prefix('WTF') }
       it { should_not validate_nested(:child1).with_prefix(:WTF) }
     end
@@ -96,7 +98,7 @@ describe 'validates_nested with [parent class with "validates, child1]"', :focus
     end
   end
 
-  describe 'description for:' do
+  describe 'its description for:' do
     let(:validator) { instance_eval self.class.description }
 
     subject { validator.description }
@@ -107,7 +109,7 @@ describe 'validates_nested with [parent class with "validates, child1]"', :focus
     context('validate_nested(:child1).with_prefix(:OMG)')   { it { should eq 'validate nested :child1 with prefix :OMG' } }
   end
 
-  describe 'error messages' do
+  describe 'its error messages:' do
     let(:options)   { self.class.parent.description }
     let(:validator) { instance_eval self.class.description }
 
@@ -119,6 +121,11 @@ describe 'validates_nested with [parent class with "validates, child1]"', :focus
       context 'nested: true' do
         describe('validate_nested(:child2)')             { it { should eq "parent doesn't nest validations for :child2" } }
         describe('validate_nested(:invalid_child_name)') { it { should eq "parent doesn't respond to :invalid_child_name" } }
+      end
+
+      context 'nested: {prefix: :OMG}' do
+        describe('validate_nested(:child1)')                   { it { should eq "parent has a prefix of :OMG.\nAre you missing '.with_prefix(:OMG)'?" } }
+        describe('validate_nested(:child1).with_prefix(:WTF)') { it { should eq "parent uses a prefix of :OMG rather than :WTF" } }
       end
 
       context 'nested: {only: :attribute1}' do

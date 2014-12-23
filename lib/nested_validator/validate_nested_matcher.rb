@@ -15,7 +15,7 @@
 RSpec::Matchers.define :validate_nested do |child_name|
 
   attr_accessor :child_name, :prefix, :only_keys, :except_keys # inputs
-  attr_accessor :parent, :child, :actual_keys
+  attr_accessor :parent, :actual_keys
 
   TEST_KEY ||= :__test_key__
 
@@ -29,7 +29,6 @@ RSpec::Matchers.define :validate_nested do |child_name|
 
     return false unless parent.respond_to? child_name
 
-    self.child       = parent.send child_name
     self.actual_keys = (error_keys_when_child_validity_is(false) - error_keys_when_child_validity_is(true))
 
     actual_keys == expected_keys
@@ -39,12 +38,16 @@ RSpec::Matchers.define :validate_nested do |child_name|
   chain(:only)        { |*only|   self.only_keys   = only   }
   chain(:except)      { |*except| self.except_keys = except }
 
+  def child
+    parent.send child_name
+  end
+
   def error_keys_when_child_validity_is(valid)
     child_error_keys = combine TEST_KEY, only_keys, except_keys
     child_errors = child_error_keys.inject({}){|result, key| result[key] = ['error message'];result }
 
     allow(child).to receive(:valid?) { valid }
-    allow(child).to receive(:errors) { child_errors }
+    allow(child).to receive(:errors) { valid ? [] : child_errors }
 
     parent.valid?
     parent.errors.keys
@@ -77,7 +80,7 @@ RSpec::Matchers.define :validate_nested do |child_name|
   end
 
   description do
-    message = "validate nested #{show child_name}"
+    message =  "validate nested #{show child_name}"
     message << " with only: #{show only_keys}" if only_keys.present?
     message << " except: #{show except_keys}"  if except_keys.present?
     message << " with prefix #{show prefix}"   if prefix.present?
@@ -92,8 +95,14 @@ RSpec::Matchers.define :validate_nested do |child_name|
         "#{child_name} doesn't respond to #{show invalid_child_keys}"
       when (missing_child_keys = expected_child_keys - actual_child_keys - invalid_child_keys - [TEST_KEY]).present?
         "#{parent} doesn't nest validations for: #{show missing_child_keys}"
-      when actual_prefix != expected_prefix
+      when actual_keys.empty?
         "parent doesn't nest validations for #{show child_name}"
+      when actual_prefix != expected_prefix
+        if prefix.present?
+          "parent uses a prefix of #{show actual_prefix} rather than #{show expected_prefix}"
+        else
+          "parent has a prefix of #{show actual_prefix}.\nAre you missing '.with_prefix(#{show actual_prefix})'?"
+        end
       else
         "parent does nest validations for: #{show except_keys & actual_child_keys}"
     end
@@ -115,13 +124,7 @@ RSpec::Matchers.define :validate_nested do |child_name|
   end
 
   def show(value)
-    if value.respond_to?(:map)
-      value.map { |key| show(key) }.join(', ')
-    elsif value.is_a?(Symbol)
-      ":#{value}"
-    else
-      value.to_s
-    end
+    Array.wrap(value).map{|key| key.is_a?(Symbol) ? ":#{key}" : key.to_s}.join(', ')
   end
 
   def combine(*keys)
