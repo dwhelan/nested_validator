@@ -1,6 +1,6 @@
 [![Gem Version](https://badge.fury.io/rb/nested_validator.png)](https://badge.fury.io/rb/nested_validator.png)
 [![Build Status](https://travis-ci.org/dwhelan/nested_validator.png?branch=master)](https://travis-ci.org/dwhelan/nested_validator)
-[![Code Climate](https://codeclimate.com/github/ericroberts/percentable.png)](https://codeclimate.com/github/ericroberts/percentable)
+[![Code Climate](https://codeclimate.com/github/dwhelan/nested_validator.png)](https://codeclimate.com/github/dwhelan/nested_validator)
 [![Coverage Status](https://coveralls.io/repos/ericroberts/percentable/badge.png?branch=master)](https://coveralls.io/r/ericroberts/percentable?branch=master)
 
 # Nested Validator
