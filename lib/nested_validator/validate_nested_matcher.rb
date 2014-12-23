@@ -104,13 +104,18 @@ RSpec::Matchers.define :validate_nested do |child_name|
     keys.map { |key| show(key) }.join(', ')
   end
 
-  def show(key)
-    key.is_a?(Symbol) ? ":#{key}" : key.to_s
+  def show(value)
+    if value.respond_to?(:map)
+      value.map { |key| show(key) }.join(', ')
+    elsif value.is_a?(Symbol)
+      ":#{value}"
+    else
+      value.to_s
+    end
   end
 
-
   description do
-    message = "validate nested :#{child_name}"
+    message = "validate nested #{show(child_name)}"
     message << " with only #{join(only_keys)}" if only_keys.present?
     message << " except #{join(except_keys)}"  if except_keys.present?
     message << " with prefix #{show(prefix)}"  if prefix.present?
@@ -118,43 +123,52 @@ RSpec::Matchers.define :validate_nested do |child_name|
   end
 
   failure_message do
-    return "#{parent} does not respond to #{child_name}" unless parent.respond_to? child_name
+    return "#{parent} doesn't respond to #{show child_name}" unless parent.respond_to? child_name
 
-    message = ''
-    hints = ''
+    messages = []
 
+    #binding.pry
     if invalid_attribute_keys.present?
-      message << "#{child_name} doesn't respond to #{invalid_attribute_keys.join(', ')}"
+      messages << "#{child_name} doesn't respond to #{show invalid_attribute_keys}"
     elsif missing_child_keys.present?
-      message << "#{parent} doesn't nest validations for: #{missing_child_keys.join(', ')}"
+      messages << "#{parent} doesn't nest validations for: #{missing_child_keys.join(', ')}"
     elsif actual_prefix != expected_prefix
-      message << "parent doesn't nest validations for #{child_name}"
+      messages << "parent doesn't nest validations for #{show child_name}"
+    elsif (unexpected_keys = except_keys & actual_child_keys).present?
+      messages << "parent does nest validations for: #{show unexpected_keys}"
     end
 
-    if actual_keys.present?
-      message << "#{child_name} was validated"
-      if (unexpected_child_keys = actual_child_keys - expected_child_keys).present?
-        message << " but got unexpected errors for '#{unexpected_child_keys.join(', ')}'"
-      end
-    end
+    #if actual_keys.present?
+    #  messages << "#{child_name} was validated"
+    #  if (unexpected_child_keys = actual_child_keys - expected_child_keys).present?
+    #    messages << " but got unexpected errors for '#{unexpected_child_keys.join(', ')}'"
+    #  end
+    #end
 
-    message << hints
-    message
+    messages.join(' and ')
   end
 
   failure_message_when_negated do
+    return "#{parent} doesn't respond to #{show child_name}" unless parent.respond_to? child_name
+
     messages = []
 
+    #binding.pry
     if (extras = only_keys & actual_child_keys).present?
-      messages << "#{parent} does nest validations for: #{extras.join(', ')}"
+      messages << "#{parent} does nest #{show child_name} validations for: #{show extras}"
+    elsif only_keys.present?
+    elsif except_keys.present?
+        messages << "#{parent} does nest #{show child_name} validations for: #{show except_keys - actual_child_keys}"
+    else
+      messages << "#{parent} does nest validations for: #{show child_name}"
     end
-    messages << "#{child_name} doesn't respond to #{invalid_attribute_keys.join(', ')}" if invalid_attribute_keys.present?
-    messages << "#{parent} was valid even though one of #{child_name} attributes '#{except_keys.join(', ')}' was invalid" if except_keys.present?
+    messages << "#{child_name} doesn't respond to #{show invalid_attribute_keys}" if invalid_attribute_keys.present?
+    #messages << "#{parent} was valid even though one of #{child_name} attributes '#{except_keys.join(', ')}' was invalid" if except_keys.present?
 
     messages.join(' and ')
   end
 
   chain(:with_prefix) { |prefix|  self.prefix      = prefix }
-  chain(:only)        { |*only|   self.only_keys   = only.map(&:to_sym) }
-  chain(:except)      { |*except| self.except_keys = except.map(&:to_sym) }
+  chain(:only)        { |*only|   self.only_keys   = only   }
+  chain(:except)      { |*except| self.except_keys = except }
 end
