@@ -83,7 +83,7 @@ RSpec::Matchers.define :validate_nested do |child_name|
   end
 
   def actual_prefix
-    :"#{actual_keys.first.to_s.sub(/\s+#{TEST_KEY}$/, '')}"
+    :"#{actual_keys.first.to_s.split.first}"
   end
 
   def missing_child_keys
@@ -123,29 +123,18 @@ RSpec::Matchers.define :validate_nested do |child_name|
   end
 
   failure_message do
-    return "#{parent} doesn't respond to #{show child_name}" unless parent.respond_to? child_name
-
-    messages = []
-
-    #binding.pry
-    if invalid_attribute_keys.present?
-      messages << "#{child_name} doesn't respond to #{show invalid_attribute_keys}"
-    elsif missing_child_keys.present?
-      messages << "#{parent} doesn't nest validations for: #{missing_child_keys.join(', ')}"
-    elsif actual_prefix != expected_prefix
-      messages << "parent doesn't nest validations for #{show child_name}"
-    elsif (unexpected_keys = except_keys & actual_child_keys).present?
-      messages << "parent does nest validations for: #{show unexpected_keys}"
+    case
+      when !parent.respond_to?(child_name)
+        "#{parent} doesn't respond to #{show child_name}"
+      when invalid_attribute_keys.present?
+        "#{child_name} doesn't respond to #{show invalid_attribute_keys}"
+      when missing_child_keys.present?
+        "#{parent} doesn't nest validations for: #{missing_child_keys.join(', ')}"
+      when actual_prefix != expected_prefix
+        "parent doesn't nest validations for #{show child_name}"
+      else
+        "parent does nest validations for: #{show except_keys & actual_child_keys}"
     end
-
-    #if actual_keys.present?
-    #  messages << "#{child_name} was validated"
-    #  if (unexpected_child_keys = actual_child_keys - expected_child_keys).present?
-    #    messages << " but got unexpected errors for '#{unexpected_child_keys.join(', ')}'"
-    #  end
-    #end
-
-    messages.join(' and ')
   end
 
   failure_message_when_negated do
