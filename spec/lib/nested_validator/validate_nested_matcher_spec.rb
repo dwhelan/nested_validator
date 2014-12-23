@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'nested_validator'
 
-describe 'validates_nested against parent class with "validates, child1"' do
+describe 'validates_nested with [parent class with "validates, child1]"', :focus do
   let(:parent_class) do
     Class.new {
       include ActiveModel::Validations
@@ -43,7 +43,7 @@ describe 'validates_nested against parent class with "validates, child1"' do
 
   before { parent_class.class_eval "validates :child1, #{options}" }
 
-  describe 'validations with options' do
+  describe 'its validations with options' do
     let(:options) { self.class.description }
 
     subject { parent }

@@ -35,9 +35,17 @@ RSpec::Matchers.define :validate_nested do |child_name|
     actual_keys == expected_keys
   end
 
+  chain(:with_prefix) { |prefix|  self.prefix      = prefix }
+  chain(:only)        { |*only|   self.only_keys   = only   }
+  chain(:except)      { |*except| self.except_keys = except }
+
   def error_keys_when_child_validity_is(valid)
+    child_error_keys = combine TEST_KEY, only_keys, except_keys
+    child_errors = child_error_keys.inject({}){|result, key| result[key] = ['error message'];result }
+
     allow(child).to receive(:valid?) { valid }
     allow(child).to receive(:errors) { child_errors }
+
     parent.valid?
     parent.errors.keys
   end
@@ -54,18 +62,10 @@ RSpec::Matchers.define :validate_nested do |child_name|
     :"#{actual_keys.first.to_s.split.first}"
   end
 
-  def child_errors
-    child_keys.inject({}){|result, key| result[key] = ['error message'];result }
-  end
-
-  def child_keys
-    flatten TEST_KEY, only_keys, except_keys
-  end
-
   def expected_child_keys
-    keys = only_keys.empty? ? [TEST_KEY] : only_keys
-    unique_except_keys = except_keys - keys
-    flatten keys - unique_except_keys
+    expected_keys = only_keys.present? ? only_keys : [TEST_KEY]
+    unique_except_keys = except_keys - only_keys
+    combine expected_keys - unique_except_keys
   end
 
   def actual_child_keys
@@ -76,25 +76,11 @@ RSpec::Matchers.define :validate_nested do |child_name|
     (only_keys + except_keys).reject{|key| child.respond_to? key}
   end
 
-  def show(value)
-    if value.respond_to?(:map)
-      value.map { |key| show(key) }.join(', ')
-    elsif value.is_a?(Symbol)
-      ":#{value}"
-    else
-      value.to_s
-    end
-  end
-
-  def flatten(*keys)
-    keys.flatten.compact
-  end
-
   description do
     message = "validate nested #{show child_name}"
     message << " with only: #{show only_keys}" if only_keys.present?
     message << " except: #{show except_keys}"  if except_keys.present?
-    message << " with prefix #{show prefix}"  if prefix.present?
+    message << " with prefix #{show prefix}"   if prefix.present?
     message
   end
 
@@ -128,7 +114,17 @@ RSpec::Matchers.define :validate_nested do |child_name|
     end
   end
 
-  chain(:with_prefix) { |prefix|  self.prefix      = prefix }
-  chain(:only)        { |*only|   self.only_keys   = only   }
-  chain(:except)      { |*except| self.except_keys = except }
+  def show(value)
+    if value.respond_to?(:map)
+      value.map { |key| show(key) }.join(', ')
+    elsif value.is_a?(Symbol)
+      ":#{value}"
+    else
+      value.to_s
+    end
+  end
+
+  def combine(*keys)
+    keys.flatten.compact
+  end
 end
