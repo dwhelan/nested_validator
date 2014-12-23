@@ -133,11 +133,11 @@ describe 'validates_nested' do
     end
 
     describe 'failure message for: should validate_nested(:child1).only(:attribute2)' do
-      it { should_fail_with("parent doesn't nest validations for: attribute2") { validate_nested(:child1).only(:attribute2) } }
+      it { should_fail_with("parent doesn't nest validations for: :attribute2") { validate_nested(:child1).only(:attribute2) } }
     end
 
     describe 'failure message for: should validate_nested(:child1).only(:attribute1, :attribute2)' do
-      it { should_fail_with("parent doesn't nest validations for: attribute2") { validate_nested(:child1).only(:attribute1, :attribute2) } }
+      it { should_fail_with("parent doesn't nest validations for: :attribute2") { validate_nested(:child1).only(:attribute1, :attribute2) } }
     end
 
     describe 'failure message for: should_not validate_nested(:child1).only(:attribute1)' do
