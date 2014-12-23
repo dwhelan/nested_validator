@@ -95,8 +95,8 @@ RSpec::Matchers.define :validate_nested do |child_name|
 
   description do
     message = "validate nested #{show child_name}"
-    message << " with only #{show only_keys}" if only_keys.present?
-    message << " except #{show except_keys}"  if except_keys.present?
+    message << " with only: #{show only_keys}" if only_keys.present?
+    message << " except: #{show except_keys}"  if except_keys.present?
     message << " with prefix #{show prefix}"  if prefix.present?
     message
   end
@@ -125,7 +125,7 @@ RSpec::Matchers.define :validate_nested do |child_name|
       when only_keys.present?
           "#{child_name} doesn't respond to #{show invalid_child_keys}" if invalid_child_keys.present?
       when except_keys.present?
-          "#{parent} does nest #{show child_name} validations for: #{show except_keys - actual_child_keys}"
+          "#{parent} doesn't nest #{show child_name} validations for: #{show except_keys - actual_child_keys}"
       else
         "#{parent} does nest validations for: #{show child_name}"
     end

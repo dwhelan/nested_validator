@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'nested_validator'
 
-describe 'validates_nested' do
+describe 'validates_nested against parent class with "validates, child1"' do
   let(:base_class) do
     Class.new {
       include ActiveModel::Validations
@@ -16,6 +16,11 @@ describe 'validates_nested' do
   let(:parent_class) do
     Class.new(base_class) {
       attr_accessor :child1, :child2
+
+      def initialize(child1=nil, child2=nil)
+        self.child1 = child1
+        self.child2 = child2
+      end
 
       def to_s
         'parent'
@@ -43,156 +48,130 @@ describe 'validates_nested' do
     }
   end
 
-  let(:child1) { child_class.new }
-  let(:child2) { child_class.new }
+  let(:parent)  { parent_class.new child_class.new, child_class.new }
+  let(:options) { { presence: true } }
 
-  def parent_with(&block)
-    parent = Class.new(parent_class) { instance_exec &block }.new
-    parent.child1 = child1
-    parent.child2 = child2
-    parent
-  end
+  before { parent_class.class_eval "validates :child1, #{options}" }
 
-  def with_nested_options(options)
-    parent_with { validates :child1, nested: options }
-  end
+  describe 'validations with options' do
+    let(:options) { self.class.description }
 
-  def validator_should_fail(block)
-    validator = block.call
-    expect(validator.matches? subject).to be false
-    validator
-  end
+    subject { parent }
 
-  def should_fail_with(message, &block)
-    validator = block.call
-    expect(validator.matches? subject).to be false
-    expect(validator.failure_message).to eq message
-  end
+    context 'nested: true' do
+      it { should validate_nested(:child1) }
+      it { should validate_nested('child1') }
 
-  def should_fail_negated_with(message, &block)
-    validator = block.call
-    expect(validator.matches? subject).to be true
-    expect(validator.failure_message_when_negated).to eq message
-  end
-
-  describe 'with no options' do
-    subject { with_nested_options true }
-
-    it { should validate_nested(:child1) }
-    it { should validate_nested('child1') }
-
-    it { should_not validate_nested(:child2) }
-    it { should_not validate_nested(:invalid_child_name) }
-
-    describe 'failure message for: should validate_nested(:child2)' do
-      it { should_fail_with("parent doesn't nest validations for :child2") { validate_nested :child2 } }
+      it { should_not validate_nested(:child2) }
+      it { should_not validate_nested(:invalid_child_name) }
     end
 
-    describe 'failure message for: should validate_nested(:invalid_child_name)' do
-      it { should_fail_with("parent doesn't respond to :invalid_child_name") { validate_nested :invalid_child_name } }
+    context 'nested: {prefix: "OMG"}' do
+      it { should validate_nested(:child1).with_prefix('OMG') }
+      it { should validate_nested(:child1).with_prefix(:OMG) }
+
+      it { should_not validate_nested(:child1).with_prefix('WTF') }
+      it { should_not validate_nested(:child1).with_prefix(:WTF) }
     end
 
-    describe 'failure message for: should_not validate_nested(:child1)' do
-      it { should_fail_negated_with('parent does nest validations for: :child1') { validate_nested :child1 } }
-    end
-  end
+    context 'nested: {only: :attribute1}' do
+      it { should validate_nested(:child1).only(:attribute1) }
+      it { should validate_nested(:child1).only('attribute1') }
 
-  describe 'with prefix "OMG"' do
-    subject { with_nested_options prefix: 'OMG' }
-
-    it { should validate_nested(:child1).with_prefix('OMG') }
-    it { should validate_nested(:child1).with_prefix(:OMG) }
-
-    it { should_not validate_nested(:child1).with_prefix('WTF') }
-    it { should_not validate_nested(:child1).with_prefix(:WTF) }
-  end
-
-  describe 'with prefix :OMG' do
-    subject { with_nested_options prefix: :OMG }
-
-    it { should validate_nested(:child1).with_prefix('OMG') }
-    it { should validate_nested(:child1).with_prefix(:OMG) }
-
-    it { should_not validate_nested(:child1).with_prefix('WTF') }
-    it { should_not validate_nested(:child1).with_prefix(:WTF) }
-  end
-
-  describe 'with "only: :attribute1"' do
-    subject { with_nested_options only: :attribute1 }
-
-    it { should validate_nested(:child1).only(:attribute1) }
-    it { should validate_nested(:child1).only('attribute1') }
-
-    it { should_not validate_nested(:child1).only(:attribute2) }
-    it { should_not validate_nested(:child1).only('attribute2') }
-    it { should_not validate_nested(:child1).only(:invalid_attribute_name) }
-    it { should_not validate_nested(:child1).only(:attribute1, :attribute2) }
-
-    describe 'failure message for: should validate_nested(:child1).only(:invalid_attribute_name)' do
-      it { should_fail_with("child1 doesn't respond to :invalid_attribute_name") { validate_nested(:child1).only(:invalid_attribute_name) } }
+      it { should_not validate_nested(:child1).only(:attribute2) }
+      it { should_not validate_nested(:child1).only('attribute2') }
+      it { should_not validate_nested(:child1).only(:invalid_attribute_name) }
+      it { should_not validate_nested(:child1).only(:attribute1, :attribute2) }
     end
 
-    describe 'failure message for: should validate_nested(:child1).only(:attribute2)' do
-      it { should_fail_with("parent doesn't nest validations for: :attribute2") { validate_nested(:child1).only(:attribute2) } }
+    context 'nested: {only: [:attribute1, :attribute2]}' do
+      it { should validate_nested(:child1).only(:attribute1) }
+      it { should validate_nested(:child1).only(:attribute2) }
+      it { should validate_nested(:child1).only(:attribute1, :attribute2) }
+      it { should validate_nested(:child1).only('attribute1', 'attribute2') }
+
+      it { should_not validate_nested(:child1).only(:attribute2, :attribute3) }
+      it { should_not validate_nested(:child1).only(:invalid_attribute_name) }
     end
 
-    describe 'failure message for: should validate_nested(:child1).only(:attribute1, :attribute2)' do
-      it { should_fail_with("parent doesn't nest validations for: :attribute2") { validate_nested(:child1).only(:attribute1, :attribute2) } }
+    context 'nested: {except: :attribute1}' do
+      it { should validate_nested(:child1).except(:attribute1) }
+      it { should validate_nested(:child1).except('attribute1') }
+
+      it { should_not validate_nested(:child1).except(:attribute2) }
     end
 
-    describe 'failure message for: should_not validate_nested(:child1).only(:attribute1)' do
-      it { should_fail_negated_with('parent does nest :child1 validations for: :attribute1') { validate_nested(:child1).only(:attribute1) } }
+    context 'nested: {except: [:attribute1, :attribute2]}' do
+      it { should validate_nested(:child1).except(:attribute1, :attribute2) }
     end
   end
 
-  describe 'with "only: [:attribute1, :attribute2]"' do
-    subject { with_nested_options only: [:attribute1, :attribute2] }
+  describe 'description for:' do
+    let(:validator) { instance_eval self.class.description }
 
-    it { should validate_nested(:child1).only(:attribute1) }
-    it { should validate_nested(:child1).only(:attribute2) }
-    it { should validate_nested(:child1).only(:attribute1, :attribute2) }
-    it { should validate_nested(:child1).only('attribute1', 'attribute2') }
+    subject { validator.description }
 
-    it { should_not validate_nested(:child1).only(:attribute2, :attribute4) }
-    it { should_not validate_nested(:child1).only(:invalid_attribute_name) }
-
-    describe 'failure message for: should_not validate_nested(:child1).only(:attribute1, :attribute2)' do
-      it { should_fail_negated_with('parent does nest :child1 validations for: :attribute1, :attribute2') { validate_nested(:child1).only(:attribute1, :attribute2) } }
-    end
+    context('validate_nested(:child1)')                     { it { should eq 'validate nested :child1' } }
+    context('validate_nested(:child1).only(:attribute1)')   { it { should eq 'validate nested :child1 with only: :attribute1' } }
+    context('validate_nested(:child1).except(:attribute1)') { it { should eq 'validate nested :child1 except: :attribute1' } }
+    context('validate_nested(:child1).with_prefix(:OMG)')   { it { should eq 'validate nested :child1 with prefix :OMG' } }
   end
 
-  describe 'with "except: :attribute1"' do
-    subject { with_nested_options except: :attribute1 }
+  describe 'error messages' do
+    let(:options) { self.class.parent.description }
+    let(:validator) { instance_eval self.class.description }
 
-    it { should validate_nested(:child1).except(:attribute1) }
-    it { should validate_nested(:child1).except('attribute1') }
+    before { validator.matches? parent }
 
-    it { should_not validate_nested(:child1).except(:attribute2) }
+    describe 'should failure messages for' do
+      before { expect(validator.matches? parent).to be false }
 
-    describe 'failure message for: should validate_nested(:child1).except(:invalid_attribute_name)' do
-      it { should_fail_with("child1 doesn't respond to :invalid_attribute_name") { validate_nested(:child1).except(:invalid_attribute_name) } }
+      subject { validator.failure_message }
+
+      context 'nested: true' do
+        describe('validate_nested(:child2)')             { it { should eq "parent doesn't nest validations for :child2" } }
+        describe('validate_nested(:invalid_child_name)') { it { should eq "parent doesn't respond to :invalid_child_name" } }
+      end
+
+      context 'nested: {only: :attribute1}' do
+        describe('validate_nested(:child1).only(:invalid_attribute_name)')  { it { should eq "child1 doesn't respond to :invalid_attribute_name" } }
+        describe('validate_nested(:child1).only(:attribute2)')              { it { should eq "parent doesn't nest validations for: :attribute2"  } }
+        describe('validate_nested(:child1).only(:attribute1, :attribute2)') { it { should eq "parent doesn't nest validations for: :attribute2"  } }
+      end
+
+      context 'nested: {except: :attribute1}' do
+        describe('validate_nested(:child1).except(:invalid_attribute_name)')  { it { should eq "child1 doesn't respond to :invalid_attribute_name"  } }
+        describe('validate_nested(:child1).except(:attribute2)')              { it { should eq 'parent does nest validations for: :attribute2' } }
+        describe('validate_nested(:child1).except(:attribute1, :attribute2)') { it { should eq 'parent does nest validations for: :attribute2' } }
+      end
     end
 
-    describe 'failure message for: should validate_nested(:child1).except(:attribute2)' do
-      it { should_fail_with('parent does nest validations for: :attribute2') { validate_nested(:child1).except(:attribute2) } }
-    end
+    describe 'should_not failure messages for' do
+      before { expect(validator.matches? parent).to be true }
 
-    describe 'failure message for: should validate_nested(:child1).except(:attribute1, :attribute2)' do
-      it { should_fail_with('parent does nest validations for: :attribute2') { validate_nested(:child1).except(:attribute1, :attribute2) } }
-    end
+      subject { validator.failure_message_when_negated }
 
-    describe 'failure message for: should_not validate_nested(:child1).except(:attribute1)' do
-      it { should_fail_negated_with('parent does nest :child1 validations for: :attribute1') { validate_nested(:child1).except(:attribute1) } }
-    end
-  end
+      context 'nested: true' do
+        describe('validate_nested(:child1)') { it { should eq 'parent does nest validations for: :child1' } }
+      end
 
-  describe 'with "except: [:attribute1, :attribute2]"' do
-    subject { with_nested_options except: [:attribute1, :attribute2] }
+      context 'nested: {only: :attribute1}' do
+        describe('validate_nested(:child1).only(:attribute1)') { it { should eq 'parent does nest :child1 validations for: :attribute1' } }
+      end
 
-    it { should validate_nested(:child1).except(:attribute1, :attribute2) }
+      context 'nested: {only: [:attribute1, :attribute2]}' do
+        describe('validate_nested(:child1).only(:attribute1)')              { it { should eq 'parent does nest :child1 validations for: :attribute1' } }
+        describe('validate_nested(:child1).only(:attribute1, :attribute2)') { it { should eq 'parent does nest :child1 validations for: :attribute1, :attribute2' } }
+      end
 
-    describe 'failure message for: should_not validate_nested(:child1).except(:attribute1, :attribute2)' do
-      it { should_fail_negated_with('parent does nest :child1 validations for: :attribute1, :attribute2') { validate_nested(:child1).except(:attribute1, :attribute2) } }
+      context 'nested: {except: :attribute1}' do
+        describe('validate_nested(:child1).except(:attribute1)') { it { should eq "parent doesn't nest :child1 validations for: :attribute1" } }
+      end
+
+      context 'nested: {except: [:attribute1, :attribute2]}' do
+        describe('validate_nested(:child1).except(:attribute1)')              { it { should eq "parent doesn't nest :child1 validations for: :attribute1" } }
+        describe('validate_nested(:child1).except(:attribute1, :attribute2)') { it { should eq "parent doesn't nest :child1 validations for: :attribute1, :attribute2" } }
+      end
     end
   end
 end
