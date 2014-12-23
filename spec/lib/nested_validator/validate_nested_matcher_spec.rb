@@ -2,19 +2,10 @@ require 'spec_helper'
 require 'nested_validator'
 
 describe 'validates_nested against parent class with "validates, child1"' do
-  let(:base_class) do
+  let(:parent_class) do
     Class.new {
       include ActiveModel::Validations
 
-      # To keep ActiveModel happy
-      def self.model_name
-        ActiveModel::Name.new(self, nil, 'temp')
-      end
-    }
-  end
-
-  let(:parent_class) do
-    Class.new(base_class) {
       attr_accessor :child1, :child2
 
       def initialize(child1=nil, child2=nil)
@@ -30,15 +21,14 @@ describe 'validates_nested against parent class with "validates, child1"' do
   end
 
   let(:child_class) do
-    Class.new(base_class) {
-      attr_accessor :attribute1
-      validates     :attribute1, presence: true
+    Class.new {
+      include ActiveModel::Validations
 
-      attr_accessor :attribute2
-      validates     :attribute2, presence: true
+      attr_accessor :attribute1, :attribute2, :attribute3
 
-      attr_accessor :attribute3
-      validates     :attribute3, presence: true
+      validates :attribute1, presence: true
+      validates :attribute2, presence: true
+      validates :attribute3, presence: true
 
       def initialize
         @attribute1 = 'valid'
@@ -118,10 +108,8 @@ describe 'validates_nested against parent class with "validates, child1"' do
   end
 
   describe 'error messages' do
-    let(:options) { self.class.parent.description }
+    let(:options)   { self.class.parent.description }
     let(:validator) { instance_eval self.class.description }
-
-    before { validator.matches? parent }
 
     describe 'should failure messages for' do
       before { expect(validator.matches? parent).to be false }

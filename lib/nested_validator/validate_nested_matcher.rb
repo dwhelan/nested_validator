@@ -14,7 +14,8 @@
 
 RSpec::Matchers.define :validate_nested do |child_name|
 
-  attr_accessor :parent, :child_name, :child, :prefix, :actual_keys, :only_keys, :except_keys
+  attr_accessor :child_name, :prefix, :only_keys, :except_keys # inputs
+  attr_accessor :parent, :child, :actual_keys
 
   TEST_KEY ||= :__test_key__
 
@@ -68,11 +69,7 @@ RSpec::Matchers.define :validate_nested do |child_name|
   end
 
   def actual_child_keys
-    actual_keys.map{|key| key.to_s.sub(/^.*\s+/, '').to_sym }#.reject{|key| key.to_sym == TEST_KEY}
-  end
-
-  def missing_child_keys
-    expected_child_keys - actual_child_keys - invalid_child_keys - [TEST_KEY]
+    actual_keys.map{|key| key.to_s.sub(/^.*\s+/, '').to_sym }
   end
 
   def invalid_child_keys
@@ -107,7 +104,7 @@ RSpec::Matchers.define :validate_nested do |child_name|
         "#{parent} doesn't respond to #{show child_name}"
       when invalid_child_keys.present?
         "#{child_name} doesn't respond to #{show invalid_child_keys}"
-      when missing_child_keys.present?
+      when (missing_child_keys = expected_child_keys - actual_child_keys - invalid_child_keys - [TEST_KEY]).present?
         "#{parent} doesn't nest validations for: #{show missing_child_keys}"
       when actual_prefix != expected_prefix
         "parent doesn't nest validations for #{show child_name}"
@@ -122,8 +119,8 @@ RSpec::Matchers.define :validate_nested do |child_name|
         "#{parent} doesn't respond to #{show child_name}"
       when (extras = only_keys & actual_child_keys).present?
           "#{parent} does nest #{show child_name} validations for: #{show extras}"
-      when only_keys.present?
-          "#{child_name} doesn't respond to #{show invalid_child_keys}" if invalid_child_keys.present?
+      when invalid_child_keys.present?
+          "#{child_name} doesn't respond to #{show invalid_child_keys}"
       when except_keys.present?
           "#{parent} doesn't nest #{show child_name} validations for: #{show except_keys - actual_child_keys}"
       else
