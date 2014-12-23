@@ -1,4 +1,4 @@
-[![Gem Version](https://badge.fury.io/rb/percentable.png)](http://badge.fury.io/rb/percentable)
+[![Gem Version](https://badge.fury.io/rb/nested_validator.png)](https://badge.fury.io/rb/nested_validator.png)
 [![Build Status](https://travis-ci.org/ericroberts/percentable.png?branch=master)](https://travis-ci.org/ericroberts/percentable)
 [![Code Climate](https://codeclimate.com/github/ericroberts/percentable.png)](https://codeclimate.com/github/ericroberts/percentable)
 [![Coverage Status](https://coveralls.io/repos/ericroberts/percentable/badge.png?branch=master)](https://coveralls.io/r/ericroberts/percentable?branch=master)
