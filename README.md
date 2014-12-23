@@ -168,6 +168,23 @@ puts parent.errors.messages
  # => {:"child attribute1"=>["can't be blank"], :"child2 attribute1"=>["can't be blank"]}
 ```
 
+## Testing With RSpec
+
+When you ```require nested_validator``` you will have access to the RSpec matcher ```validate_nested```
+that you can use in your specs.
+
+Here are some examples:
+
+``` ruby
+describe Parent do
+  it { should validate_nested(:child) }
+  it { should validate_nested(:child).with_prefix(:thing1) }
+  it { should validate_nested(:child).only(:attribute1) }
+  it { should validate_nested(:child).only(:attribute1, :attribute2) }
+  it { should validate_nested(:child).except(:attribute1) }
+  it { should validate_nested(:child).except(:attribute1, :attribute2) }
+end
+```
 ## Contributing
 
 1. Fork it ( https://github.com/dwhelan/nested_validator/fork )
