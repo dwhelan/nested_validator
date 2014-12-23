@@ -2,8 +2,8 @@ require 'i18n'
 require 'rspec/its'
 require 'coveralls'
 
-require 'pry'
-require 'awesome_print'
+#require 'pry'
+#require 'awesome_print'
 
 I18n.enforce_available_locales = true
 Coveralls.wear!
