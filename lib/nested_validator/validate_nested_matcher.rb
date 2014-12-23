@@ -118,6 +118,8 @@ RSpec::Matchers.define :validate_nested do |child_name|
           "#{child_name} doesn't respond to #{show invalid_child_keys}"
       when except_keys.present?
           "#{parent} doesn't nest #{show child_name} validations for: #{show except_keys - actual_child_keys}"
+      when prefix.present?
+        "#{parent} does nest validations for: #{show child_name} with a prefix of #{show prefix}"
       else
         "#{parent} does nest validations for: #{show child_name}"
     end
