@@ -39,7 +39,7 @@ describe 'validates_nested with [parent class with "validates, child1]"' do
   end
 
   let(:parent)    { parent_class.new child_class.new, child_class.new }
-  let(:options)   { { presence: true } }                                # Need to have valid default validation options
+  let(:options)   { { nested: true } }
   let(:validator) { instance_eval self.class.description }
 
   before { parent_class.class_eval "validates :child1, #{options}" }
