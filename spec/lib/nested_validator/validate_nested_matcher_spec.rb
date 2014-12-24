@@ -38,8 +38,9 @@ describe 'validates_nested with [parent class with "validates, child1]"' do
     }
   end
 
-  let(:parent)  { parent_class.new child_class.new, child_class.new }
-  let(:options) { { presence: true } }
+  let(:parent)    { parent_class.new child_class.new, child_class.new }
+  let(:options)   { { presence: true } }                                # Need to have valid default validation options
+  let(:validator) { instance_eval self.class.description }
 
   before { parent_class.class_eval "validates :child1, #{options}" }
 
@@ -99,8 +100,6 @@ describe 'validates_nested with [parent class with "validates, child1]"' do
   end
 
   describe 'its description for:' do
-    let(:validator) { instance_eval self.class.description }
-
     subject { validator.description }
 
     context('validate_nested(:child1)')                     { it { should eq 'validate nested :child1' } }
@@ -110,17 +109,28 @@ describe 'validates_nested with [parent class with "validates, child1]"' do
   end
 
   describe 'its error messages:' do
-    let(:options)   { self.class.parent.description }
-    let(:validator) { instance_eval self.class.description }
+    let(:options)      { self.class.parent.description }
+    let(:expect_match) { false }
+
+    before { expect(validator.matches? parent).to be expect_match }
+
+    describe 'failures for should and should_not' do
+      [:failure_message, :failure_message_when_negated].each do |message|
+        subject { validator.send message }
+
+        context 'nested: true' do
+          describe('validate_nested(:invalid_child_name)')                     { it { should eq "parent doesn't respond to :invalid_child_name" } }
+          describe('validate_nested(:child1).only(:invalid_attribute_name)')   { it { should eq "child1 doesn't respond to :invalid_attribute_name" } }
+          describe('validate_nested(:child1).except(:invalid_attribute_name)') { it { should eq "child1 doesn't respond to :invalid_attribute_name"  } }
+        end
+      end
+    end
 
     describe 'should failure messages for' do
-      before { expect(validator.matches? parent).to be false }
-
       subject { validator.failure_message }
 
       context 'nested: true' do
-        describe('validate_nested(:child2)')             { it { should eq "parent doesn't nest validations for :child2" } }
-        describe('validate_nested(:invalid_child_name)') { it { should eq "parent doesn't respond to :invalid_child_name" } }
+        describe('validate_nested(:child2)') { it { should eq "parent doesn't nest validations for :child2" } }
       end
 
       context 'nested: {prefix: :OMG}' do
@@ -129,20 +139,18 @@ describe 'validates_nested with [parent class with "validates, child1]"' do
       end
 
       context 'nested: {only: :attribute1}' do
-        describe('validate_nested(:child1).only(:invalid_attribute_name)')  { it { should eq "child1 doesn't respond to :invalid_attribute_name" } }
         describe('validate_nested(:child1).only(:attribute2)')              { it { should eq "parent doesn't nest validations for: :attribute2"  } }
         describe('validate_nested(:child1).only(:attribute1, :attribute2)') { it { should eq "parent doesn't nest validations for: :attribute2"  } }
       end
 
       context 'nested: {except: :attribute1}' do
-        describe('validate_nested(:child1).except(:invalid_attribute_name)')  { it { should eq "child1 doesn't respond to :invalid_attribute_name"  } }
         describe('validate_nested(:child1).except(:attribute2)')              { it { should eq 'parent does nest validations for: :attribute2' } }
         describe('validate_nested(:child1).except(:attribute1, :attribute2)') { it { should eq 'parent does nest validations for: :attribute2' } }
       end
     end
 
     describe 'should_not failure messages for' do
-      before { expect(validator.matches? parent).to be true }
+      let(:expect_match) { true }
 
       subject { validator.failure_message_when_negated }
 

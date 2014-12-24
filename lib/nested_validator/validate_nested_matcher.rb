@@ -28,8 +28,9 @@ RSpec::Matchers.define :validate_nested do |child_name|
     self.parent      = parent
 
     return false unless parent.respond_to? child_name
-
     self.actual_keys = (error_keys_when_child_validity_is(false) - error_keys_when_child_validity_is(true))
+    return false if invalid_child_keys.present?
+
 
     actual_keys == expected_keys
   end
@@ -89,10 +90,8 @@ RSpec::Matchers.define :validate_nested do |child_name|
 
   failure_message do
     case
-      when !parent.respond_to?(child_name)
-        "#{parent} doesn't respond to #{show child_name}"
-      when invalid_child_keys.present?
-        "#{child_name} doesn't respond to #{show invalid_child_keys}"
+      when common_failure_message
+        common_failure_message
       when (missing_child_keys = expected_child_keys - actual_child_keys - invalid_child_keys - [TEST_KEY]).present?
         "#{parent} doesn't nest validations for: #{show missing_child_keys}"
       when actual_keys.empty?
@@ -110,12 +109,10 @@ RSpec::Matchers.define :validate_nested do |child_name|
 
   failure_message_when_negated do
     case
-      when !parent.respond_to?(child_name)
-        "#{parent} doesn't respond to #{show child_name}"
+      when common_failure_message
+        common_failure_message
       when (extras = only_keys & actual_child_keys).present?
-          "#{parent} does nest #{show child_name} validations for: #{show extras}"
-      when invalid_child_keys.present?
-          "#{child_name} doesn't respond to #{show invalid_child_keys}"
+        "#{parent} does nest #{show child_name} validations for: #{show extras}"
       when except_keys.present?
           "#{parent} doesn't nest #{show child_name} validations for: #{show except_keys - actual_child_keys}"
       when prefix.present?
@@ -123,6 +120,11 @@ RSpec::Matchers.define :validate_nested do |child_name|
       else
         "#{parent} does nest validations for: #{show child_name}"
     end
+  end
+
+  def common_failure_message
+    return "#{parent} doesn't respond to #{show child_name}" unless parent.respond_to?(child_name)
+    "#{child_name} doesn't respond to #{show invalid_child_keys}" if  invalid_child_keys.present?
   end
 
   def show(value)
