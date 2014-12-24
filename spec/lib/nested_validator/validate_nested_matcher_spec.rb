@@ -58,7 +58,6 @@ describe 'validates_nested with [parent class with "validates, child1]"' do
     end
 
     context 'nested: {prefix: "OMG"}' do
-
       it { should validate_nested(:child1).with_prefix('OMG') }
       it { should validate_nested(:child1).with_prefix(:OMG) }
 
