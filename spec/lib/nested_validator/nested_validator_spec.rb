@@ -86,10 +86,16 @@ describe NestedValidator do
         its('errors.messages') { should eq :'child1 attribute1' => ["can't be blank"] }
       end
 
-      describe 'with "prefix: "OMG""' do
+      describe 'with "prefix: "OMG"', :focus do
         subject { with_nested_options prefix: 'OMG' }
 
-        its('errors.messages') { should eq :'OMG attribute1' => ["can't be blank"] }
+        its('errors.messages') { puts subject.errors.messages; should eq :'OMG attribute1' => ["can't be blank"] }
+      end
+
+      describe 'with "prefix: ""' do
+        subject { with_nested_options prefix: '' }
+
+        its('errors.messages') { should eq :'attribute1' => ["can't be blank"] }
       end
     end
 

@@ -3,6 +3,7 @@ require 'active_support/core_ext/array'
 
 module ActiveModel
   module Validations
+
     class NestedValidator < EachValidator
 
       private
@@ -63,8 +64,54 @@ module ActiveModel
     end
 
     module HelperMethods
-      def validates_nested(*attributes)
-        validates_with NestedValidator, _merge_attributes(attributes)
+      # Bases an object's validity on nested attr_names.
+      #
+      #   class Parent < ActiveRecord::Base
+      #     has_one :child
+      #
+      #     validates_nested :child
+      #   end
+      #
+      #   class Child < ActiveRecord::Base
+      #     has_one :child
+      #
+      #     validates_presence_of :attribute
+      #   end
+      #
+      # Any errors in the child will be copied to the parent using the child's name as
+      # a prefix for the error:
+      #
+      #   puts parent.errors.messages #=> { :'child attribute' => ["can't be blank"] }
+      #
+      # @param attr_names attribute names followed with options
+      #
+      # @option attr_names [String] :prefix The prefix to use instead of the attribute name
+      #
+      # @option attr_names [String, Array] :only The name(s) of attr_names to include
+      #   when validating. Default is <tt>all</tt>
+      #
+      # @option attr_names [String, Array] :except The name(s) of attr_names to exclude
+      #   when validating. Default is <tt>none</tt>
+      #
+      # @option attr_names [Symbol] :on Specifies when this validation is active. Runs in all
+      #   validation contexts by default (+nil+), other options are <tt>:create</tt>
+      #   and <tt>:update</tt>.
+      #
+      # @option attr_names  [Symbol, String or Proc] :if a method, proc or string to call to determine
+      #   if the validation should occur (e.g. <tt>if: :allow_validation</tt>,
+      #   or <tt>if: Proc.new { |user| user.signup_step > 2 }</tt>). The method,
+      #   proc or string should return or evaluate to a true or false value.
+      #
+      # @option attr_names [[Symbol, String or Proc]] :unless a method, proc or string to call to determine
+      #   if the validation should not occur (e.g. <tt>unless: :skip_validation</tt>,
+      #   or <tt>unless: Proc.new { |user| user.signup_step <= 2 }</tt>). The method,
+      #   proc or string should return or evaluate to a true or false value.
+      #
+      # @option attr_names [boolean] :strict Specifies whether validation should be strict.
+      #   See <tt>ActiveModel::Validation#validates!</tt> for more information.
+      #
+      def validates_nested(*attr_names)
+        validates_with NestedValidator, _merge_attributes(attr_names)
       end
     end
   end
