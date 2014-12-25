@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    nested_validator (1.0.0)
+    nested_validator (1.0.1)
       activemodel
 
 GEM
