@@ -3,7 +3,9 @@ require 'active_support/core_ext/array'
 
 module ActiveModel
   module Validations
-
+    # Bases an object's validity on nested attributes.
+    #
+    # @see ActiveModel::Validations::HelperMethods#validates_nested validates_nested
     class NestedValidator < EachValidator
 
       private
@@ -64,7 +66,7 @@ module ActiveModel
     end
 
     module HelperMethods
-      # Bases an object's validity on nested attr_names.
+      # Bases an object's validity on nested attributes.
       #
       #   class Parent < ActiveRecord::Base
       #     has_one :child
@@ -110,6 +112,8 @@ module ActiveModel
       # @option attr_names [boolean] :strict Specifies whether validation should be strict.
       #   See <tt>ActiveModel::Validation#validates!</tt> for more information.
       #
+      # @see ActiveModel::Validations::NestedValidator
+
       def validates_nested(*attr_names)
         validates_with NestedValidator, _merge_attributes(attr_names)
       end
