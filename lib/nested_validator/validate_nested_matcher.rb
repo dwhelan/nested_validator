@@ -1,3 +1,5 @@
+require 'rspec/expectations'
+
 # RSpec matcher to spec nested validations.
 #
 # You can use symbols or strings for any values.

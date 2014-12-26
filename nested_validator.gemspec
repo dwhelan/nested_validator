@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Declan Whelan']
   spec.email         = ['declanpwhelan@gmail.com']
   spec.summary       = 'A validator that supports nesting.'
-  spec.description   = "Nested validations allow a parent's class validity to include those of child attributes. Errors messages will be copied from the child attribute to the parent."
+  spec.description   = "Nested validations allow a parent's validity to include those of child attributes. Errors messages will be copied from the child attribute to the parent."
   spec.homepage      = 'https://github.com/dwhelan/nested_validator'
   spec.license       = 'MIT'
 
