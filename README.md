@@ -153,7 +153,7 @@ You can use the ```validates_nested``` method:
 class ParentMultiple < ParentBase
   attr_accessor :child2
 
-  validates_nested :child, :child2, only: :attribute1
+  validate_nested :child, :child2, only: :attribute1
 
   def initialize
     self.child  = Child.new
