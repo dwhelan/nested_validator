@@ -1,8 +1,9 @@
 PATH
   remote: .
   specs:
-    nested_validator (1.0.2)
+    nested_validator (1.0.3)
       activemodel
+      activesupport
 
 GEM
   remote: https://rubygems.org/
