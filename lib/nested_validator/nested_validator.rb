@@ -47,21 +47,25 @@ module ActiveModel
       end
 
       def include?(key)
-        if options[:only]
-          only.any?{|k| key =~ /^#{k}/}
-        elsif options[:except]
-          except.none?{|k| key =~ /^#{k}/}
+        if only.present?
+          only.include?(key.to_s)
+        elsif except.present?
+          !except.include?(key.to_s)
         else
           true
         end
       end
 
       def only
-        @only ||= Array.wrap(options[:only])
+        @only ||= prepare_options(:only)
       end
 
       def except
-        @except ||= Array.wrap(options[:except])
+        @except ||= prepare_options(:except)
+      end
+
+      def prepare_options(key)
+        Array.wrap(options[key]).map(&:to_s).map{|k| k.split(/\s+|,/)}.reject(&:blank?).flatten
       end
     end
 
@@ -75,7 +79,8 @@ module ActiveModel
       #   end
       #
       #   class Child < ActiveRecord::Base
-      #     has_one :child
+      #     attr_accessor :attribute
+      #     validates     :attribute, presence: true
       #
       #     validates_presence_of :attribute
       #   end
