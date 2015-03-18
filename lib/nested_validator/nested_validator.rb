@@ -37,6 +37,10 @@ module ActiveModel
       end
 
       def record_error(record, prefix, value)
+        if any.present?
+          valid_keys = any - value.errors.keys.map(&:to_s)
+          return if valid_keys.present?
+        end
         value.errors.each do |key, error|
           record.errors.add(nested_key(prefix, key), error) if include?(key)
         end
@@ -51,6 +55,8 @@ module ActiveModel
           only.include?(key.to_s)
         elsif except.present?
           !except.include?(key.to_s)
+        elsif any.present?
+          any.include?(key.to_s)
         else
           true
         end
@@ -64,8 +70,12 @@ module ActiveModel
         @except ||= prepare_options(:except)
       end
 
+      def any
+        @any ||= prepare_options(:any)
+      end
+
       def prepare_options(key)
-        Array.wrap(options[key]).map(&:to_s).map{|k| k.split(/\s+|,/)}.reject(&:blank?).flatten
+        Array.wrap(options[key]).map(&:to_s).map{|k| k.split(/\s+|,/)}.flatten.reject(&:blank?)
       end
     end
 

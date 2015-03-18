@@ -36,9 +36,14 @@ RSpec::Matchers.define :validate_nested do |child_name|
     actual_keys == expected_keys
   end
 
+  def prepare_keys(keys)
+    keys2=keys.map(&:to_s).map{|k| k.split(/\s+|,/)}.flatten.reject(&:blank?)
+    keys
+  end
+
   chain(:with_prefix) { |prefix|  self.prefix      = prefix }
-  chain(:only)        { |*only|   self.only_keys   = only   }
-  chain(:except)      { |*except| self.except_keys = except }
+  chain(:only)        { |*only|   self.only_keys   = prepare_keys(only)   }
+  chain(:except)      { |*except| self.except_keys = prepare_keys(except) }
 
   def child
     parent.send child_name
@@ -78,6 +83,7 @@ RSpec::Matchers.define :validate_nested do |child_name|
   end
 
   def invalid_child_keys
+    #binding.pry
     (only_keys + except_keys).reject{|key| child.respond_to? key}
   end
 
