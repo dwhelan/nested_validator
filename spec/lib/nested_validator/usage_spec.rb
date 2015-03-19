@@ -51,7 +51,7 @@ describe 'Typical usage' do
     puts parent.errors.messages
   end
 
-  specify 'any child attributes',:focus do
+  specify 'any child attributes' do
     class ParentExcept < ParentBase
       validates :child, nested: { any: [:attribute1, :attribute2] }
     end
