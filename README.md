@@ -94,6 +94,23 @@ puts parent.errors.messages
  # => {:"child attribute1"=>["can't be blank"]}
 ```
 
+### OK, is there a way to require one of several attributes?
+
+Yes. You can use the ```any``` option which requires that at least
+one of the specified child attributes is valid:
+
+``` ruby
+class ParentExcept < ParentBase
+  validates :child, nested: { any: [:attribute1, :attribute2] }
+end
+
+parent = ParentExcept.new
+parent.valid?
+puts parent.errors.messages
+
+ # => {:"child attribute1"=>["can't be blank"], :"child attribute2"=>["can't be blank"]}
+```
+
 ### Alright, what if I want a custom message?
 
 You can specify a ```prefix``` instead of the child's attribute name:
@@ -183,6 +200,7 @@ describe Parent do
   it { should validate_nested(:child).only(:attribute1, :attribute2) }
   it { should validate_nested(:child).except(:attribute1) }
   it { should validate_nested(:child).except(:attribute1, :attribute2) }
+  it { should validate_nested(:child).any(:attribute1, :attribute2) }
 end
 ```
 ## Contributing

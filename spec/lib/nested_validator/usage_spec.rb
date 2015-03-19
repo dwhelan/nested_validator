@@ -51,6 +51,16 @@ describe 'Typical usage' do
     puts parent.errors.messages
   end
 
+  specify 'any child attributes',:focus do
+    class ParentExcept < ParentBase
+      validates :child, nested: { any: [:attribute1, :attribute2] }
+    end
+
+    parent = ParentExcept.new
+    parent.valid?
+    puts parent.errors.messages
+  end
+
   specify 'custom message prefix' do
     class ParentPrefix < ParentBase
       validates :child, nested: { only: :attribute1, prefix: 'OMG'}
