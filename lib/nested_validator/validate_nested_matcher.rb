@@ -12,10 +12,11 @@ require 'rspec/expectations'
 #       it { should validate_nested(:child).only(:attribute1) }
 #       it { should validate_nested(:child).only(:attribute1, :attribute2) }
 #       it { should validate_nested(:child).except(:attribute1) }
+#       it { should validate_nested(:child).any(:attribute1, :attribute2) }
 #     end
 RSpec::Matchers.define :validate_nested do |child_name|
 
-  attr_accessor :child_name, :prefix, :only_keys, :except_keys # inputs
+  attr_accessor :child_name, :prefix, :only_keys, :except_keys, :any_keys
   attr_accessor :parent, :actual_keys
 
   TEST_KEY ||= :__test_key__
@@ -24,6 +25,7 @@ RSpec::Matchers.define :validate_nested do |child_name|
     self.prefix      ||= ''
     self.only_keys   ||= []
     self.except_keys ||= []
+    self.any_keys    ||= []
 
     self.child_name  = child_name
     self.parent      = parent
@@ -32,25 +34,28 @@ RSpec::Matchers.define :validate_nested do |child_name|
     self.actual_keys = (error_keys_when_child_validity_is(false) - error_keys_when_child_validity_is(true))
     return false if invalid_child_keys.present?
 
-
     actual_keys == expected_keys
   end
 
   def prepare_keys(keys)
-    keys2=keys.map(&:to_s).map{|k| k.split(/\s+|,/)}.flatten.reject(&:blank?)
-    keys
+    if keys.length == 1 && keys[0].is_a?(String)
+      keys[0].split(/\s+|,/).reject(&:blank?)
+    else
+      keys
+    end
   end
 
   chain(:with_prefix) { |prefix|  self.prefix      = prefix }
   chain(:only)        { |*only|   self.only_keys   = prepare_keys(only)   }
   chain(:except)      { |*except| self.except_keys = prepare_keys(except) }
+  chain(:any)         { |*any|    self.any_keys    = prepare_keys(any) }
 
   def child
-    parent.send child_name
+    parent.public_send child_name
   end
 
   def error_keys_when_child_validity_is(valid)
-    child_error_keys = combine TEST_KEY, only_keys, except_keys
+    child_error_keys = combine TEST_KEY, only_keys, except_keys, any_keys
     child_errors = child_error_keys.inject({}){|result, key| result[key] = ['error message'];result }
 
     allow(child).to receive(:valid?) { valid }
@@ -73,8 +78,15 @@ RSpec::Matchers.define :validate_nested do |child_name|
   end
 
   def expected_child_keys
-    expected_keys = only_keys.present? ? only_keys : [TEST_KEY]
-    unique_except_keys = except_keys - only_keys
+    expected_keys = case
+      when only_keys.present?
+        only_keys
+      when any_keys.present?
+        any_keys
+      else
+        [TEST_KEY]
+    end
+    unique_except_keys = except_keys - only_keys - any_keys
     combine expected_keys - unique_except_keys
   end
 
@@ -91,6 +103,7 @@ RSpec::Matchers.define :validate_nested do |child_name|
     message =  "validate nested #{show child_name}"
     message << " with only: #{show only_keys}" if only_keys.present?
     message << " except: #{show except_keys}"  if except_keys.present?
+    message << " any: #{show any_keys}"        if any_keys.present?
     message << " with prefix #{show prefix}"   if prefix.present?
     message
   end
