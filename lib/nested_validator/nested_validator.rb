@@ -38,10 +38,11 @@ module ActiveModel
 
       def record_error(record, prefix, value)
         if any.present?
-          valid_keys = any - value.errors.keys.map(&:to_s)
+          valid_keys = any - value.errors.keys.map{|k| k.to_s.split.first}
           return if valid_keys.present?
         end
         value.errors.each do |key, error|
+          key = key.to_s.split.first
           record.errors.add(nested_key(prefix, key), error) if include?(key)
         end
       end

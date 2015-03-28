@@ -220,4 +220,50 @@ describe 'nested validation' do
       context('{prefix: "OMG"}') { it { should eq :'OMG[key] attribute' } }
     end
   end
+
+  describe 'multiple levels' do
+    let(:grand_parent_class) do
+      opts = parent_options
+      Class.new {
+        include ActiveModel::Validations
+
+        attr_accessor :parent
+
+        instance_eval "validates :parent, nested: #{opts}"
+
+        def initialize(parent=nil)
+          self.parent = parent
+        end
+
+        def to_s
+          'grand_parent'
+        end
+      }
+    end
+
+    let(:grand_parent)   { grand_parent_class.new parent }
+    let(:parent_options) { self.class.description }
+    let(:options)        { 'true' }
+
+    [
+      '{only:   :other}',
+      '{any:    :other}',
+      '{except: :child}'
+    ].each do |parent_options|
+      describe parent_options do
+        it { expect(grand_parent).to be_valid }
+      end
+    end
+
+    [
+      'true',
+      '{only:   :child}',
+      '{any:    :child}',
+      '{except: :other}'
+    ].each do |parent_options|
+      describe parent_options do
+        it { expect(grand_parent).to_not be_valid }
+      end
+    end
+  end
 end
