@@ -7,19 +7,19 @@ RSpec::Matchers.define :detect_nested_error_for do
   end
 
   def description
-    "detect an error for '#{child_attribute}'"
+    "detect an error for child '#{child_attribute}'"
   end
 
   failure_message do
-    "has no error for '#{child_attribute}'"
+    "has no error for child '#{child_attribute}'"
   end
 
   failure_message_when_negated do
-    "has an error '#{child_attribute}' => '#{error}'"
+    "has an error child '#{child_attribute}' => '#{error}'"
   end
 
   def error
-    subject.errors[child_attribute].first
+    subject.errors[:child].find{|e| e =~ /^#{expected} /}
   end
 
   def attribute
@@ -31,7 +31,7 @@ RSpec::Matchers.define :detect_nested_error_for do
   end
 
   def child_attribute
-    :"child #{attribute}"
+    :"#{attribute}"
   end
 end
 
@@ -193,31 +193,42 @@ describe 'nested validation' do
     end
   end
 
-  describe 'error message keys' do
+  describe 'error keys' do
     before { parent.valid? }
     subject { parent.errors.messages.keys.first }
 
-    context('true')            { it { should eq :'child attribute' } }
-    context('{prefix: ""}')    { it { should eq :'attribute' } }
-    context('{prefix: nil}')   { it { should eq :'attribute' } }
-    context('{prefix: "OMG"}') { it { should eq :'OMG attribute' } }
+    context('true')            { it { should eq :'child' } }
+    context('{prefix: ""}')    { it { should eq :'' } }
+    context('{prefix: nil}')   { it { should eq :'' } }
+    context('{prefix: "OMG"}') { it { should eq :'OMG' } }
 
     context 'with arrays' do
       let(:child) { [child_class.new] }
 
-      context('true')            { it { should eq :'child[0] attribute' } }
-      context('{prefix: ""}')    { it { should eq :'[0] attribute' } }
-      context('{prefix: nil}')   { it { should eq :'[0] attribute' } }
-      context('{prefix: "OMG"}') { it { should eq :'OMG[0] attribute' } }
+      context('true')            { it { should eq :'child[0]' } }
+      context('{prefix: ""}')    { it { should eq :'[0]' } }
+      context('{prefix: nil}')   { it { should eq :'[0]' } }
+      context('{prefix: "OMG"}') { it { should eq :'OMG[0]' } }
     end
 
     context('with hashes') do
       let(:child) { {key: child_class.new} }
 
-      context('true')            { it { should eq :'child[key] attribute' } }
-      context('{prefix: ""}')    { it { should eq :'[key] attribute' } }
-      context('{prefix: nil}')   { it { should eq :'[key] attribute' } }
-      context('{prefix: "OMG"}') { it { should eq :'OMG[key] attribute' } }
+      context('true')            { it { should eq :'child[key]' } }
+      context('{prefix: ""}')    { it { should eq :'[key]' } }
+      context('{prefix: nil}')   { it { should eq :'[key]' } }
+      context('{prefix: "OMG"}') { it { should eq :'OMG[key]' } }
+    end
+  end
+
+  describe 'error messages' do
+    before { parent.valid? }
+    subject { parent.errors.messages.values.first }
+
+    context('true') do
+      it { should include "attribute can't be blank" }
+      it { should include "attribute2 can't be blank" }
+      it { should include "attribute3 can't be blank" }
     end
   end
 
@@ -264,6 +275,17 @@ describe 'nested validation' do
       describe parent_options do
         it { expect(grand_parent).to_not be_valid }
       end
+    end
+
+    describe 'errors[:parent]' do
+      let(:parent_options) { true}
+
+      before { grand_parent.valid? }
+      subject { grand_parent.errors[:parent] }
+
+      it { should include "child attribute can't be blank"  }
+      it { should include "child attribute2 can't be blank" }
+      it { should include "child attribute3 can't be blank" }
     end
   end
 end

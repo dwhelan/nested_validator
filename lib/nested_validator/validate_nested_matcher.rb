@@ -16,8 +16,15 @@ require 'rspec/expectations'
 #     end
 RSpec::Matchers.define :validate_nested do |child_name|
 
-  attr_accessor :child_name, :prefix, :only_keys, :except_keys, :any_keys
-  attr_accessor :parent, :actual_keys
+  [:child_name, :prefix, :only_keys, :except_keys, :any_keys, :parent, :child_attributes, :child_error_key].each do |attr|
+    define_method(attr) do
+      instance_variable_get "@#{attr}"
+    end
+
+    define_method("#{attr}=") do |value|
+      instance_variable_set "@#{attr}", value
+    end
+  end
 
   TEST_KEY ||= :__test_key__
 
@@ -27,14 +34,16 @@ RSpec::Matchers.define :validate_nested do |child_name|
     self.except_keys ||= []
     self.any_keys    ||= []
 
-    self.child_name  = child_name
+    self.child_name  = child_name.to_sym
     self.parent      = parent
 
     return false unless parent.respond_to? child_name
-    self.actual_keys = (error_keys_when_child_validity_is(false) - error_keys_when_child_validity_is(true))
     return false if invalid_child_keys.present?
 
-    actual_keys == expected_keys
+    self.child_attributes = child_attributes_when_validity_is(false) - child_attributes_when_validity_is(true)
+    self.child_error_key  = (child_error_keys_when_validity_is(false) - child_error_keys_when_validity_is(true)).first
+
+    child_attributes == expected_child_attributes && child_error_key == expected_child_error_key
   end
 
   def prepare_keys(keys)
@@ -45,36 +54,40 @@ RSpec::Matchers.define :validate_nested do |child_name|
     end
   end
 
-  chain(:with_prefix) { |prefix|  self.prefix      = prefix }
+  chain(:with_prefix) { |prefix|  self.prefix      = prefix.to_sym }
   chain(:only)        { |*only|   self.only_keys   = prepare_keys(only)   }
   chain(:except)      { |*except| self.except_keys = prepare_keys(except) }
   chain(:any)         { |*any|    self.any_keys    = prepare_keys(any) }
 
   def child
-    parent.public_send child_name
+    parent.public_send(child_name)
   end
 
-  def error_keys_when_child_validity_is(valid)
+  def child_attributes_when_validity_is(valid)
+    errors_when_child_validity_is(valid).map{|k, msg| msg.split.first.to_sym}
+  end
+
+  def child_error_keys_when_validity_is(valid)
+    errors_when_child_validity_is(valid).keys
+  end
+
+  def errors_when_child_validity_is(valid)
     child_error_keys = combine TEST_KEY, only_keys, except_keys, any_keys
-    child_errors = child_error_keys.inject({}){|result, key| result[key] = ['error message'];result }
+    child_errors     = child_error_keys.inject({}) { |result, key| result[key] = ['error message']; result }
 
     allow(child).to receive(:valid?) { valid }
     allow(child).to receive(:errors) { valid ? [] : child_errors }
 
     parent.valid?
-    parent.errors.keys
+    parent.errors
   end
 
-  def expected_keys
-    expected_child_keys.map{|key| :"#{expected_prefix} #{key}"}
+  def expected_child_attributes
+    expected_child_keys.map{|k| k.to_sym}
   end
 
-  def expected_prefix
+  def expected_child_error_key
     prefix.present? ? prefix : child_name
-  end
-
-  def actual_prefix
-    :"#{actual_keys.first.to_s.split.first}"
   end
 
   def expected_child_keys
@@ -91,11 +104,10 @@ RSpec::Matchers.define :validate_nested do |child_name|
   end
 
   def actual_child_keys
-    actual_keys.map{|key| key.to_s.sub(/^.*\s+/, '').to_sym }
+    child_attributes.map{|key| key.to_s.sub(/^.*\s+/, '').to_sym }
   end
 
   def invalid_child_keys
-    #binding.pry
     (only_keys + except_keys).reject{|key| child.respond_to? key}
   end
 
@@ -114,13 +126,13 @@ RSpec::Matchers.define :validate_nested do |child_name|
         common_failure_message
       when (missing_child_keys = expected_child_keys - actual_child_keys - invalid_child_keys - [TEST_KEY]).present?
         "#{parent} doesn't nest validations for: #{show missing_child_keys}"
-      when actual_keys.empty?
+      when child_attributes.empty?
         "parent doesn't nest validations for #{show child_name}"
-      when actual_prefix != expected_prefix
+      when child_error_key != expected_child_error_key
         if prefix.present?
-          "parent uses a prefix of #{show actual_prefix} rather than #{show expected_prefix}"
+          "parent uses a prefix of #{show child_error_key} rather than #{show expected_child_error_key}"
         else
-          "parent has a prefix of #{show actual_prefix}. Are you missing '.with_prefix(#{show actual_prefix})'?"
+          "parent has a prefix of #{show child_error_key}. Are you missing '.with_prefix(#{show child_error_key})'?"
         end
       else
         "parent does nest validations for: #{show except_keys & actual_child_keys}"

@@ -41,9 +41,9 @@ module ActiveModel
           valid_keys = any - value.errors.keys.map{|k| k.to_s.split.first}
           return if valid_keys.present?
         end
-        value.errors.each do |key, error|
-          key = key.to_s.split.first
-          record.errors.add(nested_key(prefix, key), error) if include?(key)
+        value.errors.select{|key, _| include?(key)}.each do |key, error|
+          message = [key.to_s, error].join(' ').strip
+          record.errors.add(prefix, message) unless record.errors[prefix].include?(message)
         end
       end
 
